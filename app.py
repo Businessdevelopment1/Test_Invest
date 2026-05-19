@@ -1,6 +1,6 @@
 """
-Mark Trading Dashboard
-Live portfolio tracker + AI agent for your 17 US stock positions.
+Mark Trading Dashboard — Sci-Fi Dark Edition
+Live portfolio tracker for 17 US stock positions.
 """
 
 import streamlit as st
@@ -25,7 +25,6 @@ st.set_page_config(
 )
 
 # ── Portfolio snapshot (May 15, 2026) ─────────────────────────────────────────
-# cost_basis = ref_value − unrealized_pnl (derived from screenshots)
 PORTFOLIO = {
     "META":  {"cost_basis": 1088.74, "ref_value": 1110.59, "sector": "Technology"},
     "AMZN":  {"cost_basis":  872.70, "ref_value": 1068.15, "sector": "Technology"},
@@ -47,98 +46,246 @@ PORTFOLIO = {
 }
 TICKERS = list(PORTFOLIO.keys())
 
+# ── Colour palette ────────────────────────────────────────────────────────────
+CYAN   = "#00d4ff"
+CYAN2  = "#00fff0"
+GREEN  = "#00ff88"
+RED    = "#ff3366"
+YELLOW = "#ffd700"
+BG     = "#020b18"
+CARD   = "#041525"
+BORDER = "#0a3a5a"
+
 # ── CSS ───────────────────────────────────────────────────────────────────────
-st.markdown("""
+st.markdown(f"""
 <style>
-[data-testid="stAppViewContainer"] { background: #080818; }
-[data-testid="stHeader"]           { background: #080818; }
-[data-testid="stSidebar"]          { background: #0f0f26; }
-[data-testid="stTabs"]             { background: transparent; }
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Rajdhani:wght@400;500;600&display=swap');
 
-.kpi-card {
-    background: linear-gradient(135deg, #11112b 0%, #191935 100%);
-    border: 1px solid #26265a;
-    border-radius: 14px;
-    padding: 18px 16px;
+/* ── Base ── */
+html, body, [data-testid="stAppViewContainer"],
+[data-testid="stMain"], .main {{
+    background: {BG} !important;
+    background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0,60,120,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(0,100,180,0.10) 0%, transparent 50%);
+}}
+[data-testid="stHeader"]  {{ background: {BG} !important; }}
+[data-testid="stSidebar"] {{ background: #010e1a !important; }}
+* {{ font-family: 'Rajdhani', sans-serif; }}
+
+/* ── Hide default streamlit chrome ── */
+#MainMenu, footer, [data-testid="stToolbar"] {{ visibility: hidden; }}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {{ width: 4px; }}
+::-webkit-scrollbar-track {{ background: {BG}; }}
+::-webkit-scrollbar-thumb {{ background: {CYAN}44; border-radius: 2px; }}
+
+/* ── Dashboard title bar ── */
+.dash-header {{
     text-align: center;
-    margin-bottom: 4px;
-}
-.kpi-label { font-size: 0.7rem; color: #7878aa; letter-spacing: 0.1em; text-transform: uppercase; }
-.kpi-value { font-size: 1.75rem; font-weight: 700; margin: 4px 0 2px; }
-.kpi-sub   { font-size: 0.8rem; color: #9999bb; }
+    padding: 18px 0 6px;
+    border-bottom: 1px solid {CYAN}33;
+    margin-bottom: 18px;
+}}
+.dash-title {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: {CYAN};
+    text-shadow: 0 0 20px {CYAN}88, 0 0 40px {CYAN}44;
+    letter-spacing: 0.12em;
+    margin: 0;
+}}
+.dash-subtitle {{
+    font-size: 0.78rem;
+    color: {CYAN}99;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 4px;
+}}
 
-.green  { color: #06d6a0; }
-.red    { color: #ef476f; }
-.yellow { color: #ffd166; }
-.muted  { color: #8888aa; }
+/* ── KPI cards ── */
+.kpi-card {{
+    background: linear-gradient(135deg, {CARD} 0%, #031e35 100%);
+    border: 1px solid {CYAN}44;
+    border-top: 2px solid {CYAN}cc;
+    border-radius: 6px;
+    padding: 16px 14px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 0 18px {CYAN}18, inset 0 0 20px rgba(0,212,255,0.03);
+    margin-bottom: 2px;
+}}
+.kpi-card::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, {CYAN}88, transparent);
+}}
+.kpi-label {{
+    font-size: 0.65rem;
+    color: {CYAN}99;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif;
+}}
+.kpi-value {{
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 6px 0 3px;
+    font-family: 'Orbitron', sans-serif;
+    line-height: 1;
+}}
+.kpi-sub {{ font-size: 0.78rem; color: #6699bb; }}
 
-.alert-crit {
-    background: rgba(239,71,111,0.1);
-    border: 1px solid rgba(239,71,111,0.45);
-    border-radius: 10px;
-    padding: 13px 16px;
+/* ── Colours ── */
+.cyan   {{ color: {CYAN};   text-shadow: 0 0 8px {CYAN}88; }}
+.green  {{ color: {GREEN};  text-shadow: 0 0 8px {GREEN}66; }}
+.red    {{ color: {RED};    text-shadow: 0 0 8px {RED}66; }}
+.yellow {{ color: {YELLOW}; text-shadow: 0 0 8px {YELLOW}66; }}
+
+/* ── Section headers ── */
+.section-title {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    color: {CYAN}cc;
+    text-transform: uppercase;
+    padding: 6px 0 6px 10px;
+    border-left: 3px solid {CYAN};
+    margin: 14px 0 10px;
+    background: linear-gradient(90deg, {CYAN}0a, transparent);
+}}
+
+/* ── Alert banners ── */
+.alert-crit {{
+    background: linear-gradient(90deg, {RED}18, transparent);
+    border: 1px solid {RED}55;
+    border-left: 3px solid {RED};
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 4px 0;
+    font-size: 0.88rem;
+    color: #ffaaaa;
+    box-shadow: 0 0 12px {RED}22;
+}}
+.alert-warn {{
+    background: linear-gradient(90deg, {YELLOW}18, transparent);
+    border: 1px solid {YELLOW}44;
+    border-left: 3px solid {YELLOW};
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 4px 0;
+    font-size: 0.88rem;
+    color: #ffe08a;
+    box-shadow: 0 0 12px {YELLOW}22;
+}}
+
+/* ── News cards ── */
+.news-card {{
+    background: linear-gradient(90deg, {CYAN}08, transparent);
+    border: 1px solid {CYAN}22;
+    border-left: 3px solid {CYAN};
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
     margin: 5px 0;
-    font-size: 0.9rem;
-}
-.alert-warn {
-    background: rgba(255,209,102,0.1);
-    border: 1px solid rgba(255,209,102,0.4);
-    border-radius: 10px;
-    padding: 13px 16px;
-    margin: 5px 0;
-    font-size: 0.9rem;
-}
-.mark-bubble {
-    background: linear-gradient(135deg, #0c1b3e 0%, #091526 100%);
-    border-left: 3px solid #4361ee;
-    border-radius: 0 10px 10px 0;
+    transition: border-color 0.2s;
+}}
+.news-card:hover {{ border-color: {CYAN}88; }}
+.news-card a {{ color: {CYAN}cc; text-decoration: none; font-size: 0.87rem; line-height: 1.45; }}
+.news-card a:hover {{ color: {CYAN}; }}
+.news-meta {{ font-size: 0.68rem; color: #336688; margin-top: 4px; letter-spacing: 0.05em; }}
+
+/* ── Mark bubble ── */
+.mark-bubble {{
+    background: linear-gradient(135deg, #031525 0%, #020f1e 100%);
+    border: 1px solid {CYAN}33;
+    border-left: 3px solid {CYAN};
+    border-radius: 0 8px 8px 0;
     padding: 14px 18px;
     margin: 8px 0;
     font-size: 0.91rem;
     line-height: 1.6;
     white-space: pre-wrap;
-}
-.user-bubble {
-    background: linear-gradient(135deg, #0c2e1c 0%, #091f11 100%);
-    border-left: 3px solid #06d6a0;
-    border-radius: 0 10px 10px 0;
-    padding: 14px 18px;
-    margin: 8px 0;
-    margin-left: 18%;
-    font-size: 0.91rem;
-}
-.news-card {
-    background: #13132f;
-    border-left: 3px solid #4361ee;
-    border-radius: 0 8px 8px 0;
-    padding: 11px 14px;
-    margin: 5px 0;
-}
-.news-card a        { color: #8b9dff; text-decoration: none; font-size: 0.88rem; line-height: 1.4; }
-.news-card a:hover  { color: #c0ccff; }
-.news-meta          { font-size: 0.7rem; color: #55558a; margin-top: 4px; }
-.section-title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #c8c8f0;
-    margin: 16px 0 8px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #22224a;
-}
+    box-shadow: 0 0 20px {CYAN}0f;
+    color: #b0d8f0;
+}}
+
+/* ── Dataframe overrides ── */
+[data-testid="stDataFrame"] {{
+    border: 1px solid {CYAN}33 !important;
+    border-radius: 6px;
+}}
+[data-testid="stDataFrame"] th {{
+    background: #031e35 !important;
+    color: {CYAN} !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.12em !important;
+}}
+
+/* ── Tabs ── */
+[data-testid="stTabs"] [role="tab"] {{
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.15em !important;
+    color: {CYAN}88 !important;
+    padding: 8px 16px !important;
+}}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
+    color: {CYAN} !important;
+    border-bottom: 2px solid {CYAN} !important;
+}}
+
+/* ── Buttons ── */
+[data-testid="stButton"] button {{
+    background: transparent !important;
+    border: 1px solid {CYAN}66 !important;
+    color: {CYAN} !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.1em !important;
+    border-radius: 4px !important;
+    transition: all 0.2s !important;
+}}
+[data-testid="stButton"] button:hover {{
+    background: {CYAN}18 !important;
+    border-color: {CYAN} !important;
+    box-shadow: 0 0 12px {CYAN}44 !important;
+}}
+
+/* ── Selectbox / radio ── */
+[data-testid="stSelectbox"] label,
+[data-testid="stRadio"] label {{
+    color: {CYAN}99 !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.1em !important;
+}}
+
+/* ── Spinner ── */
+[data-testid="stSpinner"] {{ color: {CYAN} !important; }}
+
+/* ── Divider line ── */
+.glow-line {{
+    height: 1px;
+    background: linear-gradient(90deg, transparent, {CYAN}66, transparent);
+    margin: 12px 0;
+    border: none;
+}}
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Data helpers ─────────────────────────────────────────────────────────────
+# ── Data helpers ──────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_prices(bust: int = 0):
-    """Batch-download latest and previous close for all tickers."""
     try:
         raw = yf.download(
             TICKERS, period="5d", auto_adjust=True,
             progress=False, threads=True, group_by="ticker",
         )
-        # raw["Close"] is a DataFrame: index=date, columns=tickers
         closes = raw["Close"].dropna(how="all")
         current = closes.iloc[-1].to_dict()
         prev    = closes.iloc[-2].to_dict() if len(closes) >= 2 else current
@@ -158,7 +305,7 @@ def fetch_thb_rate():
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
-def fetch_news(ticker: str) -> list[dict]:
+def fetch_news(ticker: str) -> list:
     try:
         raw = yf.Ticker(ticker).news or []
         out = []
@@ -182,162 +329,66 @@ def fetch_news(ticker: str) -> list[dict]:
         return []
 
 
-@st.cache_data(ttl=1800, show_spinner=False)
-def fetch_all_news() -> dict:
-    return {t: fetch_news(t) for t in TICKERS}
-
-
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_history(ticker: str, period: str) -> pd.DataFrame:
     return yf.download(ticker, period=period, auto_adjust=True, progress=False)
 
 
-# ── Portfolio calculations ────────────────────────────────────────────────────
+# ── Portfolio build ───────────────────────────────────────────────────────────
 def build_df(prices: dict, prev: dict, thb_rate: float) -> pd.DataFrame:
     rows = []
     for ticker, info in PORTFOLIO.items():
         cur_px  = prices.get(ticker) or info["ref_value"]
         prv_px  = prev.get(ticker)   or cur_px
-        # Estimate shares: ref_value was the dollar amount on snapshot day at cur_px
-        shares      = info["ref_value"] / cur_px if cur_px > 0 else 1.0
-        cur_val     = shares * cur_px
-        cost        = info["cost_basis"]
-        pnl_usd     = cur_val - cost
-        pnl_pct     = pnl_usd / cost * 100 if cost > 0 else 0.0
-        day_usd     = shares * (cur_px - prv_px)
-        day_pct     = (cur_px - prv_px) / prv_px * 100 if prv_px > 0 else 0.0
-
-        alert = "crit" if pnl_pct <= -30 else ("warn" if pnl_pct <= -7 else "ok")
-
+        shares  = info["ref_value"] / cur_px if cur_px > 0 else 1.0
+        cur_val = shares * cur_px
+        cost    = info["cost_basis"]
+        pnl_usd = cur_val - cost
+        pnl_pct = pnl_usd / cost * 100 if cost > 0 else 0.0
+        day_usd = shares * (cur_px - prv_px)
+        day_pct = (cur_px - prv_px) / prv_px * 100 if prv_px > 0 else 0.0
+        alert   = "crit" if pnl_pct <= -30 else ("warn" if pnl_pct <= -7 else "ok")
         rows.append({
-            "Ticker":      ticker,
-            "Sector":      info["sector"],
-            "Shares":      round(shares, 4),
-            "Price":       round(cur_px, 2),
-            "Value_USD":   round(cur_val, 2),
-            "Value_THB":   round(cur_val * thb_rate, 0),
-            "Cost":        round(cost, 2),
-            "PnL_USD":     round(pnl_usd, 2),
-            "PnL_pct":     round(pnl_pct, 2),
-            "Day_USD":     round(day_usd, 2),
-            "Day_pct":     round(day_pct, 2),
-            "Alert":       alert,
+            "Ticker":    ticker,
+            "Sector":    info["sector"],
+            "Shares":    round(shares, 4),
+            "Price":     round(cur_px, 2),
+            "Value_USD": round(cur_val, 2),
+            "Value_THB": round(cur_val * thb_rate, 0),
+            "Cost":      round(cost, 2),
+            "PnL_USD":   round(pnl_usd, 2),
+            "PnL_pct":   round(pnl_pct, 2),
+            "Day_USD":   round(day_usd, 2),
+            "Day_pct":   round(day_pct, 2),
+            "Alert":     alert,
         })
     return pd.DataFrame(rows).sort_values("Value_USD", ascending=False).reset_index(drop=True)
 
 
-# ── Mark AI ──────────────────────────────────────────────────────────────────
-def _get_client(api_key: str):
-    if not ANTHROPIC_AVAILABLE or not api_key:
-        return None
-    return anthropic.Anthropic(api_key=api_key)
+# ── Chart helpers ─────────────────────────────────────────────────────────────
+CHART_LAYOUT = dict(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color="#8ab8d0", family="Rajdhani, sans-serif", size=11),
+    margin=dict(t=10, b=10, l=10, r=10),
+)
+GRID_COLOR = "#0a2a40"
 
 
-def mark_chat(user_msg: str, df: pd.DataFrame, api_key: str) -> str:
-    client = _get_client(api_key)
-    if not client:
-        return (
-            "Mark is offline — add your **ANTHROPIC_API_KEY** to Streamlit secrets "
-            "to enable AI-powered chat. See the README for instructions."
-        )
-    portfolio_txt = df[["Ticker", "Sector", "Value_USD", "PnL_pct", "Day_pct"]].to_string(index=False)
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1024,
-            system=f"""You are Mark, a sharp and concise AI portfolio analyst.
-
-Current portfolio ({datetime.now().strftime('%b %d, %Y')}):
-{portfolio_txt}
-
-Rules:
-- Be direct and concise — no fluff
-- Flag positions with PnL_pct ≤ -7% as needing attention
-- Use USD values; include THB in parentheses only when relevant
-- Give actionable commentary, not generic advice
-- If asked about news, say you're using Yahoo Finance data""",
-            messages=[{"role": "user", "content": user_msg}],
-        )
-        return resp.content[0].text
-    except Exception as e:
-        return f"Mark hit an error: {e}"
-
-
-def mark_brief(df: pd.DataFrame, all_news: dict, api_key: str) -> str:
-    client = _get_client(api_key)
-    if not client:
-        return _fallback_brief(df)
-
-    news_lines = ""
-    for ticker in TICKERS[:10]:
-        items = all_news.get(ticker, [])
-        if items:
-            news_lines += f"\n{ticker}: {items[0]['title']}"
-
-    portfolio_txt = df[["Ticker", "Value_USD", "PnL_pct", "Day_pct"]].to_string(index=False)
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=500,
-            messages=[{"role": "user", "content": f"""Write a sharp, under-200-word portfolio brief as Mark.
-
-Portfolio:
-{portfolio_txt}
-
-Latest headlines:
-{news_lines}
-
-Start with: "📊 Mark's Portfolio Brief — {datetime.now().strftime('%b %d, %Y')}"
-Cover: top risks, biggest movers, any positions needing action.
-End with one sentence on what to watch next.
-Be direct. No fluff."""}],
-        )
-        return resp.content[0].text
-    except Exception as e:
-        return _fallback_brief(df)
-
-
-def _fallback_brief(df: pd.DataFrame) -> str:
-    total    = df["Value_USD"].sum()
-    total_pl = df["PnL_USD"].sum()
-    best     = df.loc[df["PnL_pct"].idxmax()]
-    worst    = df.loc[df["PnL_pct"].idxmin()]
-    alerts   = df[df["Alert"] != "ok"]
-
-    lines = [
-        f"📊 Mark's Portfolio Brief — {datetime.now().strftime('%b %d, %Y')}",
-        "",
-        f"Total: ${total:,.2f}  |  Total P&L: ${total_pl:+,.2f}",
-        f"Best: {best['Ticker']} ({best['PnL_pct']:+.1f}%)  |  Worst: {worst['Ticker']} ({worst['PnL_pct']:+.1f}%)",
-    ]
-    if len(alerts):
-        lines.append(f"\n⚠️ {len(alerts)} position(s) need attention:")
-        for _, r in alerts.iterrows():
-            lines.append(f"  • {r['Ticker']}: {r['PnL_pct']:+.1f}%")
-    lines.append("\n_Add ANTHROPIC_API_KEY to Streamlit secrets for AI-powered insights._")
-    return "\n".join(lines)
-
-
-# ── Main ─────────────────────────────────────────────────────────────────────
+# ── Main app ──────────────────────────────────────────────────────────────────
 def main():
-    # Session state init
-    for key, default in [
-        ("chat",           []),
-        ("mark_brief",     None),
-        ("brief_time",     None),
-        ("bust",           0),
-    ]:
+    for key, default in [("chat", []), ("mark_brief", None),
+                          ("brief_time", None), ("bust", 0)]:
         if key not in st.session_state:
             st.session_state[key] = default
 
-    # API key from secrets
     api_key = ""
     try:
         api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
     except Exception:
         pass
 
-    # ── Fetch data ──────────────────────────────────────────────────────────
+    # ── Fetch ────────────────────────────────────────────────────────────────
     with st.spinner(""):
         prices, prev = fetch_prices(st.session_state.bust)
         thb_rate     = fetch_thb_rate()
@@ -351,233 +402,226 @@ def main():
     day_pl_p   = day_pl / total_val * 100 if total_val else 0
     alerts_df  = df[df["Alert"] != "ok"]
 
-    # ── Header ──────────────────────────────────────────────────────────────
-    h1, h2, h3 = st.columns([5, 3, 1])
-    with h1:
-        st.markdown("## 📊 Mark — Trading Dashboard")
-    with h2:
-        st.caption(f"🕐 {datetime.now().strftime('%b %d, %Y  %H:%M')}  ·  Prices refresh every 5 min")
-    with h3:
-        if st.button("🔄", help="Force refresh prices"):
-            st.session_state.bust += 1
-            st.rerun()
+    # ── Header ───────────────────────────────────────────────────────────────
+    st.markdown(f"""
+    <div class='dash-header'>
+        <div class='dash-title'>📊 MARK — TRADING DASHBOARD</div>
+        <div class='dash-subtitle'>
+            Live Portfolio Intelligence &nbsp;·&nbsp;
+            {datetime.now().strftime('%b %d, %Y  %H:%M')} &nbsp;·&nbsp;
+            17 Positions
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # ── KPI row ─────────────────────────────────────────────────────────────
-    c1, c2, c3, c4, c5 = st.columns(5)
+    # ── KPI Row ──────────────────────────────────────────────────────────────
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
 
-    def kpi_html(label, val, sub, cls):
+    def kpi(label, value, sub, cls):
         return f"""<div class='kpi-card'>
             <div class='kpi-label'>{label}</div>
-            <div class='kpi-value {cls}'>{val}</div>
+            <div class='kpi-value {cls}'>{value}</div>
             <div class='kpi-sub'>{sub}</div>
         </div>"""
 
     with c1:
-        st.markdown(kpi_html(
-            "Total Portfolio",
-            f"${total_val:,.0f}",
-            f"฿{total_val * thb_rate:,.0f}",
-            "muted",
-        ), unsafe_allow_html=True)
+        st.markdown(kpi("Portfolio Value", f"${total_val:,.0f}",
+                        f"฿{total_val*thb_rate:,.0f}", "cyan"), unsafe_allow_html=True)
     with c2:
         cls = "green" if total_pl >= 0 else "red"
-        st.markdown(kpi_html(
-            "Total P&L",
-            f"{total_pl_p:+.1f}%",
-            f"${total_pl:+,.0f}",
-            cls,
-        ), unsafe_allow_html=True)
+        st.markdown(kpi("Total P&L", f"{total_pl_p:+.1f}%",
+                        f"${total_pl:+,.0f}", cls), unsafe_allow_html=True)
     with c3:
         cls = "green" if day_pl >= 0 else "red"
-        st.markdown(kpi_html(
-            "Today's P&L",
-            f"{day_pl_p:+.2f}%",
-            f"${day_pl:+,.0f}",
-            cls,
-        ), unsafe_allow_html=True)
+        st.markdown(kpi("Today P&L", f"{day_pl_p:+.2f}%",
+                        f"${day_pl:+,.0f}", cls), unsafe_allow_html=True)
     with c4:
-        cls = "yellow" if len(alerts_df) else "muted"
-        st.markdown(kpi_html(
-            "Positions",
-            f"{len(df)}",
-            f"{len(alerts_df)} need attention" if len(alerts_df) else "All clear",
-            cls,
-        ), unsafe_allow_html=True)
+        st.markdown(kpi("Positions", "17",
+                        f"{len(alerts_df)} need attention", "yellow"), unsafe_allow_html=True)
     with c5:
-        st.markdown(kpi_html(
-            "USD / THB",
-            f"{thb_rate:.2f}",
-            "Live rate",
-            "muted",
-        ), unsafe_allow_html=True)
+        st.markdown(kpi("USD / THB", f"{thb_rate:.2f}",
+                        "Live rate", "cyan"), unsafe_allow_html=True)
+    with c6:
+        st.markdown(kpi("Cost Basis", f"${total_cost:,.0f}",
+                        "Original invested", "cyan"), unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Refresh button (small, top right)
+    _, rbtn = st.columns([11, 1])
+    with rbtn:
+        if st.button("⟳", help="Refresh prices"):
+            st.session_state.bust += 1
+            st.rerun()
 
-    # ── Alert banners ────────────────────────────────────────────────────────
+    st.markdown("<div class='glow-line'></div>", unsafe_allow_html=True)
+
+    # ── Alert banners ─────────────────────────────────────────────────────────
     crit_df = alerts_df[alerts_df["Alert"] == "crit"]
     warn_df = alerts_df[alerts_df["Alert"] == "warn"]
-
     if len(crit_df):
-        names = ", ".join(f"{r.Ticker} ({r.PnL_pct:+.1f}%)" for r in crit_df.itertuples())
-        st.markdown(
-            f"<div class='alert-crit'>🚨 <strong>Critical positions (≤ −30%):</strong> {names}</div>",
-            unsafe_allow_html=True,
-        )
+        names = "  ·  ".join(f"{r.Ticker} ({r.PnL_pct:+.1f}%)" for r in crit_df.itertuples())
+        st.markdown(f"<div class='alert-crit'>🚨 CRITICAL &nbsp;|&nbsp; {names}</div>",
+                    unsafe_allow_html=True)
     if len(warn_df):
-        names = ", ".join(f"{r.Ticker} ({r.PnL_pct:+.1f}%)" for r in warn_df.itertuples())
-        st.markdown(
-            f"<div class='alert-warn'>⚠️ <strong>Watch list (≤ −7%):</strong> {names}</div>",
-            unsafe_allow_html=True,
-        )
+        names = "  ·  ".join(f"{r.Ticker} ({r.PnL_pct:+.1f}%)" for r in warn_df.itertuples())
+        st.markdown(f"<div class='alert-warn'>⚠ WATCH LIST &nbsp;|&nbsp; {names}</div>",
+                    unsafe_allow_html=True)
 
-    # ── Tabs ────────────────────────────────────────────────────────────────
-    tab1, tab2, tab3, tab4 = st.tabs(["📈 Overview", "📋 Holdings", "📰 Mark's News", "💬 Chat with Mark"])
+    # ── Tabs ─────────────────────────────────────────────────────────────────
+    tab1, tab2, tab3, tab4 = st.tabs(["  OVERVIEW  ", "  HOLDINGS  ", "  NEWS FEED  ", "  MARK AI  "])
 
-    # ── Tab 1: Overview ──────────────────────────────────────────────────────
+    # ══ TAB 1 — OVERVIEW ═════════════════════════════════════════════════════
     with tab1:
-        left, right = st.columns([3, 2])
+        col_l, col_r = st.columns([3, 2])
 
-        with left:
+        with col_l:
             st.markdown("<div class='section-title'>Portfolio Allocation</div>", unsafe_allow_html=True)
-            fig_pie = px.pie(
-                df, values="Value_USD", names="Ticker",
-                hole=0.52,
-                color_discrete_sequence=px.colors.sequential.Plasma_r,
+            cyan_seq = [
+                "#00d4ff","#00b8d9","#009cb3","#00808c","#006466",
+                "#004d4d","#003333","#001a1a","#00fff0","#00e8d8",
+                "#00d1c0","#00baa8","#00a390","#008c78","#007560",
+                "#005e48","#004730",
+            ]
+            fig_pie = go.Figure(go.Pie(
+                labels=df["Ticker"],
+                values=df["Value_USD"],
+                hole=0.55,
+                marker=dict(
+                    colors=cyan_seq,
+                    line=dict(color=BG, width=2),
+                ),
+                textposition="inside",
+                textinfo="percent+label",
+                textfont=dict(size=10, color="white"),
+                hovertemplate="<b>%{label}</b><br>$%{value:,.0f}<br>%{percent}<extra></extra>",
+            ))
+            fig_pie.add_annotation(
+                text=f"<b>${total_val:,.0f}</b>",
+                x=0.5, y=0.5, font=dict(size=15, color=CYAN, family="Orbitron"),
+                showarrow=False,
             )
-            fig_pie.update_traces(textposition="inside", textinfo="percent+label", textfont_size=11)
-            fig_pie.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_color="#c8c8f0", margin=dict(t=10, b=10, l=10, r=10),
-                legend=dict(font_size=10), height=360,
-            )
+            fig_pie.update_layout(**CHART_LAYOUT, height=350,
+                                  legend=dict(font_size=9, orientation="v"))
             st.plotly_chart(fig_pie, use_container_width=True)
 
-        with right:
-            st.markdown("<div class='section-title'>P&L by Position</div>", unsafe_allow_html=True)
-            sorted_df = df.sort_values("PnL_pct")
+        with col_r:
+            st.markdown("<div class='section-title'>Unrealized P&L by Position</div>", unsafe_allow_html=True)
+            sd = df.sort_values("PnL_pct")
+            bar_colors = [RED if v < 0 else GREEN for v in sd["PnL_pct"]]
             fig_bar = go.Figure(go.Bar(
-                x=sorted_df["PnL_pct"],
-                y=sorted_df["Ticker"],
+                x=sd["PnL_pct"], y=sd["Ticker"],
                 orientation="h",
-                marker_color=["#ef476f" if v < 0 else "#06d6a0" for v in sorted_df["PnL_pct"]],
-                text=[f"{v:+.1f}%" for v in sorted_df["PnL_pct"]],
+                marker=dict(color=bar_colors,
+                            line=dict(color="rgba(0,0,0,0)", width=0)),
+                text=[f"{v:+.1f}%" for v in sd["PnL_pct"]],
                 textposition="outside",
-                textfont_size=10,
+                textfont=dict(size=9),
+                hovertemplate="<b>%{y}</b>: %{x:+.2f}%<extra></extra>",
             ))
             fig_bar.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_color="#c8c8f0",
-                xaxis=dict(showgrid=False, zeroline=True, zerolinecolor="#33335a"),
-                yaxis=dict(showgrid=False),
-                margin=dict(t=10, b=10, l=10, r=55), height=360,
+                **CHART_LAYOUT, height=350,
+                xaxis=dict(showgrid=False, zeroline=True,
+                           zerolinecolor=CYAN+"44", zerolinewidth=1),
+                yaxis=dict(showgrid=False, tickfont=dict(size=9)),
             )
             st.plotly_chart(fig_bar, use_container_width=True)
 
+        # Sector breakdown
         st.markdown("<div class='section-title'>Sector Breakdown</div>", unsafe_allow_html=True)
-        sector = df.groupby("Sector").agg(
-            Value=("Value_USD", "sum"),
-            PnL=("PnL_USD", "sum"),
-            Cost=("Cost", "sum"),
+        sec = df.groupby("Sector").agg(
+            Value=("Value_USD","sum"), PnL=("PnL_USD","sum"), Cost=("Cost","sum")
         ).reset_index()
-        sector["PnL_pct"] = sector["PnL"] / sector["Cost"] * 100
+        sec["PnL_pct"] = sec["PnL"] / sec["Cost"] * 100
 
-        fig_sec = px.bar(
-            sector, x="Sector", y="Value",
-            color="PnL_pct",
-            color_continuous_scale=["#ef476f", "#ffd166", "#06d6a0"],
-            color_continuous_midpoint=0,
-            text=[f"${v:,.0f}" for v in sector["Value"]],
-            labels={"Value": "Value (USD)", "PnL_pct": "P&L %"},
-        )
+        fig_sec = go.Figure()
+        sec_colors = [RED if v < 0 else CYAN for v in sec["PnL_pct"]]
+        fig_sec.add_trace(go.Bar(
+            x=sec["Sector"], y=sec["Value"],
+            marker=dict(
+                color=sec_colors,
+                opacity=0.8,
+                line=dict(color=CYAN+"44", width=1),
+            ),
+            text=[f"${v:,.0f}" for v in sec["Value"]],
+            textposition="outside",
+            textfont=dict(size=10, color=CYAN),
+            customdata=sec["PnL_pct"],
+            hovertemplate="<b>%{x}</b><br>Value: $%{y:,.0f}<br>P&L: %{customdata:+.1f}%<extra></extra>",
+        ))
         fig_sec.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font_color="#c8c8f0",
+            **CHART_LAYOUT, height=260,
             xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#18183a"),
-            margin=dict(t=10, b=10), height=280,
-            coloraxis_colorbar=dict(title="P&L %", len=0.7),
+            yaxis=dict(showgrid=True, gridcolor=GRID_COLOR),
         )
         st.plotly_chart(fig_sec, use_container_width=True)
 
-    # ── Tab 2: Holdings ──────────────────────────────────────────────────────
+    # ══ TAB 2 — HOLDINGS ═════════════════════════════════════════════════════
     with tab2:
-        st.markdown("<div class='section-title'>All Positions — Live Prices</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>Live Positions — All 17 Stocks</div>", unsafe_allow_html=True)
 
         display = df.rename(columns={
-            "Price":     "Price (USD)",
-            "Value_USD": "Value (USD)",
-            "Value_THB": "Value (THB)",
-            "PnL_USD":   "P&L (USD)",
-            "PnL_pct":   "P&L %",
-            "Day_USD":   "Day P&L (USD)",
-            "Day_pct":   "Day %",
-        })[["Ticker", "Sector", "Shares", "Price (USD)", "Value (USD)", "Value (THB)",
-            "P&L (USD)", "P&L %", "Day P&L (USD)", "Day %"]]
+            "Price":"Price (USD)", "Value_USD":"Value (USD)", "Value_THB":"Value (THB)",
+            "PnL_USD":"P&L ($)", "PnL_pct":"P&L %",
+            "Day_USD":"Day ($)", "Day_pct":"Day %",
+        })[["Ticker","Sector","Shares","Price (USD)","Value (USD)","Value (THB)",
+            "P&L ($)","P&L %","Day ($)","Day %"]]
 
         st.dataframe(
-            display,
-            use_container_width=True,
-            height=560,
-            hide_index=True,
+            display, use_container_width=True, height=560, hide_index=True,
             column_config={
-                "Price (USD)":   st.column_config.NumberColumn(format="$%.2f"),
-                "Value (USD)":   st.column_config.NumberColumn(format="$%.2f"),
-                "Value (THB)":   st.column_config.NumberColumn(format="฿%.0f"),
-                "P&L (USD)":     st.column_config.NumberColumn(format="$%+.2f"),
-                "P&L %":         st.column_config.NumberColumn(format="%+.2f%%"),
-                "Day P&L (USD)": st.column_config.NumberColumn(format="$%+.2f"),
-                "Day %":         st.column_config.NumberColumn(format="%+.2f%%"),
+                "Price (USD)": st.column_config.NumberColumn(format="$%.2f"),
+                "Value (USD)": st.column_config.NumberColumn(format="$%.2f"),
+                "Value (THB)": st.column_config.NumberColumn(format="฿%.0f"),
+                "P&L ($)":     st.column_config.NumberColumn(format="$%+.2f"),
+                "P&L %":       st.column_config.NumberColumn(format="%+.2f%%"),
+                "Day ($)":     st.column_config.NumberColumn(format="$%+.2f"),
+                "Day %":       st.column_config.NumberColumn(format="%+.2f%%"),
             },
         )
 
         st.markdown("<div class='section-title'>Price Chart</div>", unsafe_allow_html=True)
-        sel_col, per_col = st.columns([2, 3])
-        with sel_col:
+        s_col, p_col = st.columns([2, 4])
+        with s_col:
             selected = st.selectbox("Ticker:", TICKERS)
-        with per_col:
-            period = st.radio("Period:", ["1mo", "3mo", "6mo", "1y", "2y"], horizontal=True, index=2)
+        with p_col:
+            period = st.radio("Period:", ["1mo","3mo","6mo","1y","2y"], horizontal=True, index=2)
 
         hist = fetch_history(selected, period)
         if not hist.empty:
             close = hist["Close"].squeeze()
+            is_up = float(close.iloc[-1]) >= float(close.iloc[0])
+            line_color = GREEN if is_up else RED
+            fill_color = "rgba(0,255,136,0.06)" if is_up else "rgba(255,51,102,0.06)"
+
             fig_line = go.Figure()
-            start_price = float(close.iloc[0])
-            color = "#06d6a0" if float(close.iloc[-1]) >= start_price else "#ef476f"
             fig_line.add_trace(go.Scatter(
                 x=hist.index, y=close,
                 mode="lines",
-                line=dict(color=color, width=2),
-                fill="tozeroy", fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
+                line=dict(color=line_color, width=1.8),
+                fill="tozeroy", fillcolor=fill_color,
                 name=selected,
                 hovertemplate="$%{y:.2f}<extra></extra>",
             ))
             fig_line.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font_color="#c8c8f0",
+                **CHART_LAYOUT, height=300, hovermode="x unified",
                 xaxis=dict(showgrid=False),
-                yaxis=dict(showgrid=True, gridcolor="#18183a"),
-                margin=dict(t=10, b=10), height=300, hovermode="x unified",
+                yaxis=dict(showgrid=True, gridcolor=GRID_COLOR),
             )
             st.plotly_chart(fig_line, use_container_width=True)
 
-    # ── Tab 3: Mark's News ───────────────────────────────────────────────────
+    # ══ TAB 3 — NEWS ═════════════════════════════════════════════════════════
     with tab3:
         brief_col, news_col = st.columns([2, 3])
 
         with brief_col:
-            st.markdown("<div class='section-title'>🤖 Mark's Portfolio Brief</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>Mark's Portfolio Brief</div>", unsafe_allow_html=True)
+            needs = (st.session_state.brief_time is None or
+                     (datetime.now() - st.session_state.brief_time) > timedelta(days=2))
 
-            needs_refresh = (
-                st.session_state.brief_time is None
-                or (datetime.now() - st.session_state.brief_time) > timedelta(days=2)
-            )
-
-            if st.button("⚡ Generate Brief", use_container_width=True) or (
-                needs_refresh and st.session_state.mark_brief is None
+            if st.button("⚡  Generate Brief", use_container_width=True) or (
+                needs and st.session_state.mark_brief is None
             ):
-                with st.spinner("Mark is reading the markets..."):
-                    all_news = fetch_all_news()
-                    st.session_state.mark_brief = mark_brief(df, all_news, api_key)
+                with st.spinner("Analysing portfolio..."):
+                    st.session_state.mark_brief = _fallback_brief(df, alerts_df)
                     st.session_state.brief_time = datetime.now()
 
             if st.session_state.mark_brief:
@@ -586,24 +630,20 @@ def main():
                     unsafe_allow_html=True,
                 )
                 if st.session_state.brief_time:
-                    next_refresh = st.session_state.brief_time + timedelta(days=2)
-                    st.caption(
-                        f"Generated: {st.session_state.brief_time.strftime('%b %d %H:%M')}  ·  "
-                        f"Next: {next_refresh.strftime('%b %d')}"
-                    )
+                    next_r = st.session_state.brief_time + timedelta(days=2)
+                    st.caption(f"Generated {st.session_state.brief_time.strftime('%b %d %H:%M')} · Next {next_r.strftime('%b %d')}")
             else:
-                st.info("Click **Generate Brief** to get Mark's portfolio intelligence update.")
+                st.info("Click Generate Brief for your portfolio snapshot.")
 
         with news_col:
-            st.markdown("<div class='section-title'>📰 Latest News</div>", unsafe_allow_html=True)
-            news_sel = st.selectbox("Ticker news:", TICKERS, key="news_ticker")
-
+            st.markdown("<div class='section-title'>Latest News by Ticker</div>", unsafe_allow_html=True)
+            news_sel = st.selectbox("Select ticker:", TICKERS, key="news_t")
             items = fetch_news(news_sel)
             if items:
                 for item in items:
                     st.markdown(
                         f"""<div class='news-card'>
-                            <a href='{item['link']}' target='_blank'>📄 {item['title']}</a>
+                            <a href='{item['link']}' target='_blank'>▸ {item['title']}</a>
                             <div class='news-meta'>{item['publisher']} · {item['date']}</div>
                         </div>""",
                         unsafe_allow_html=True,
@@ -611,63 +651,88 @@ def main():
             else:
                 st.info(f"No recent news for {news_sel}.")
 
-    # ── Tab 4: Chat with Mark ────────────────────────────────────────────────
+    # ══ TAB 4 — MARK AI ══════════════════════════════════════════════════════
     with tab4:
-        st.markdown("<div class='section-title'>💬 Chat with Mark</div>", unsafe_allow_html=True)
-
+        st.markdown("<div class='section-title'>Chat with Mark — AI Portfolio Analyst</div>",
+                    unsafe_allow_html=True)
         if not api_key:
-            st.warning(
-                "Mark's AI chat needs an Anthropic API key. "
-                "Add `ANTHROPIC_API_KEY` to your Streamlit secrets — see the README."
-            )
+            st.warning("Mark's AI chat requires an ANTHROPIC_API_KEY in Streamlit secrets.")
 
-        # Chat history display
         if not st.session_state.chat:
             st.markdown("""<div class='mark-bubble'>
-👋 Hi, I'm <strong>Mark</strong> — your AI portfolio analyst.
+👋 Hi, I'm <b>Mark</b> — your AI portfolio analyst.
 
-I'm watching all 17 of your positions in real time. Try asking me:
-• "Which positions should I cut?"
-• "What's the latest news on DUOL?"
-• "Analyse my tech sector concentration"
-• "How is my portfolio doing today?"
+Ask me anything:
+  · "Which positions should I review?"
+  · "What's happening with DUOL?"
+  · "Analyse my tech sector exposure"
+  · "How is my portfolio performing today?"
 </div>""", unsafe_allow_html=True)
 
         for msg in st.session_state.chat:
-            if msg["role"] == "user":
-                st.markdown(
-                    f"<div class='user-bubble'>🧑 {msg['content']}</div>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f"<div class='mark-bubble'>🤖 {msg['content']}</div>",
-                    unsafe_allow_html=True,
-                )
+            css = "user-bubble" if msg["role"] == "user" else "mark-bubble"
+            icon = "🧑" if msg["role"] == "user" else "🤖"
+            st.markdown(
+                f"<div class='{css}'>{icon} {msg['content']}</div>",
+                unsafe_allow_html=True,
+            )
 
-        # Input form (stays at bottom)
         with st.form("chat_form", clear_on_submit=True):
-            in_col, btn_col = st.columns([6, 1])
-            with in_col:
-                user_input = st.text_input(
-                    "Message",
-                    placeholder="Ask Mark about your portfolio...",
-                    label_visibility="collapsed",
-                )
-            with btn_col:
-                send = st.form_submit_button("Send →", use_container_width=True)
+            ic, bc = st.columns([6, 1])
+            with ic:
+                user_input = st.text_input("Message", placeholder="Ask Mark...",
+                                           label_visibility="collapsed")
+            with bc:
+                send = st.form_submit_button("Send", use_container_width=True)
 
         if send and user_input.strip():
             st.session_state.chat.append({"role": "user", "content": user_input.strip()})
             with st.spinner("Mark is thinking..."):
-                reply = mark_chat(user_input.strip(), df, api_key)
+                reply = _mark_chat(user_input.strip(), df, api_key)
             st.session_state.chat.append({"role": "assistant", "content": reply})
             st.rerun()
 
         if st.session_state.chat:
-            if st.button("🗑️ Clear chat"):
+            if st.button("🗑  Clear chat"):
                 st.session_state.chat = []
                 st.rerun()
+
+
+# ── Mark helpers ──────────────────────────────────────────────────────────────
+def _fallback_brief(df, alerts):
+    total = df["Value_USD"].sum()
+    pl    = df["PnL_USD"].sum()
+    best  = df.loc[df["PnL_pct"].idxmax()]
+    worst = df.loc[df["PnL_pct"].idxmin()]
+    lines = [
+        f"📊 Mark's Portfolio Brief — {datetime.now().strftime('%b %d, %Y')}",
+        "",
+        f"Total Value : ${total:,.2f}",
+        f"Total P&L   : ${pl:+,.2f}",
+        f"Best        : {best['Ticker']} ({best['PnL_pct']:+.1f}%)",
+        f"Worst       : {worst['Ticker']} ({worst['PnL_pct']:+.1f}%)",
+    ]
+    if len(alerts):
+        lines += ["", f"⚠ {len(alerts)} position(s) need attention:"]
+        for _, r in alerts.iterrows():
+            lines.append(f"  · {r['Ticker']}: {r['PnL_pct']:+.1f}%")
+    return "\n".join(lines)
+
+
+def _mark_chat(user_msg, df, api_key):
+    if not ANTHROPIC_AVAILABLE or not api_key:
+        return "Mark is offline — add ANTHROPIC_API_KEY to Streamlit secrets."
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        ctx = df[["Ticker","Sector","Value_USD","PnL_pct","Day_pct"]].to_string(index=False)
+        resp = client.messages.create(
+            model="claude-sonnet-4-6", max_tokens=1024,
+            system=f"You are Mark, a concise AI portfolio analyst. Portfolio:\n{ctx}\nDate: {datetime.now().strftime('%b %d, %Y')}. Be direct, no fluff.",
+            messages=[{"role": "user", "content": user_msg}],
+        )
+        return resp.content[0].text
+    except Exception as e:
+        return f"Error: {e}"
 
 
 if __name__ == "__main__":
