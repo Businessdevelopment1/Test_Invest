@@ -339,16 +339,19 @@ def fetch_history(ticker: str, period: str) -> pd.DataFrame:
 def build_df(prices: dict, prev: dict, thb_rate: float) -> pd.DataFrame:
     rows = []
     for ticker, info in PORTFOLIO.items():
-        cur_px  = prices.get(ticker) or info["snapshot_px"]
-        prv_px  = prev.get(ticker)   or cur_px
-        shares  = info["shares"]
-        cur_val = shares * cur_px
-        cost    = info["cost_basis"]
-        pnl_usd = cur_val - cost
-        pnl_pct = pnl_usd / cost * 100 if cost > 0 else 0.0
-        day_usd = shares * (cur_px - prv_px)
-        day_pct = (cur_px - prv_px) / prv_px * 100 if prv_px > 0 else 0.0
-        alert   = "crit" if pnl_pct <= -30 else ("warn" if pnl_pct <= -7 else "ok")
+        cur_px   = prices.get(ticker) or info["snapshot_px"]
+        raw_prev = prev.get(ticker)
+        # Only use prev price if it is genuinely different from today
+        prv_px   = raw_prev if (raw_prev and raw_prev != cur_px) else None
+        shares   = info["shares"]
+        cur_val  = shares * cur_px
+        prv_val  = shares * prv_px if prv_px else None
+        cost     = info["cost_basis"]
+        pnl_usd  = cur_val - cost
+        pnl_pct  = pnl_usd / cost * 100 if cost > 0 else 0.0
+        day_usd  = (cur_val - prv_val) if prv_val is not None else 0.0
+        day_pct  = (cur_px - prv_px) / prv_px * 100 if prv_px else 0.0
+        alert    = "crit" if pnl_pct <= -30 else ("warn" if pnl_pct <= -7 else "ok")
         rows.append({
             "Ticker":    ticker,
             "Sector":    info["sector"],
@@ -356,6 +359,7 @@ def build_df(prices: dict, prev: dict, thb_rate: float) -> pd.DataFrame:
             "Price":     round(cur_px, 2),
             "Value_USD": round(cur_val, 2),
             "Value_THB": round(cur_val * thb_rate, 0),
+            "Prev_Val":  round(prv_val, 2) if prv_val is not None else round(cur_val, 2),
             "Cost":      round(cost, 2),
             "PnL_USD":   round(pnl_usd, 2),
             "PnL_pct":   round(pnl_pct, 2),
@@ -405,7 +409,9 @@ def main():
     total_pl   = df["PnL_USD"].sum()
     total_pl_p = total_pl / total_cost * 100 if total_cost else 0
     day_pl     = df["Day_USD"].sum()
-    day_pl_p   = day_pl / total_val * 100 if total_val else 0
+    # Use yesterday's total portfolio value as denominator (correct weighting)
+    prev_total = df["Prev_Val"].sum()
+    day_pl_p   = day_pl / prev_total * 100 if prev_total > 0 else 0
     alerts_df  = df[df["Alert"] != "ok"]
 
     # ── Header ───────────────────────────────────────────────────────────────
