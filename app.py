@@ -26,23 +26,24 @@ st.set_page_config(
 
 # ── Portfolio snapshot (May 15, 2026) ─────────────────────────────────────────
 PORTFOLIO = {
-    "META":  {"cost_basis": 1088.74, "ref_value": 1110.59, "sector": "Technology"},
-    "AMZN":  {"cost_basis":  872.70, "ref_value": 1068.15, "sector": "Technology"},
-    "MSFT":  {"cost_basis":  987.70, "ref_value": 1036.08, "sector": "Technology"},
-    "GOOGL": {"cost_basis":  335.13, "ref_value":  802.63, "sector": "Technology"},
-    "NVDA":  {"cost_basis":  464.70, "ref_value":  737.85, "sector": "Technology"},
-    "LLY":   {"cost_basis":  520.22, "ref_value":  735.75, "sector": "Healthcare"},
-    "AMD":   {"cost_basis":  153.75, "ref_value":  497.79, "sector": "Technology"},
-    "VOO":   {"cost_basis":  428.84, "ref_value":  470.13, "sector": "ETF"},
-    "SGOL":  {"cost_basis":  399.36, "ref_value":  402.73, "sector": "Commodity"},
-    "NFLX":  {"cost_basis":  252.63, "ref_value":  267.62, "sector": "Technology"},
-    "TSM":   {"cost_basis":  199.68, "ref_value":  244.85, "sector": "Technology"},
-    "QQQ":   {"cost_basis":  152.43, "ref_value":  212.78, "sector": "ETF"},
-    "AVGO":  {"cost_basis":  158.66, "ref_value":  202.28, "sector": "Technology"},
-    "SOFI":  {"cost_basis":  230.50, "ref_value":  177.36, "sector": "Finance"},
-    "MARA":  {"cost_basis":  182.82, "ref_value":  118.90, "sector": "Crypto"},
-    "ORCL":  {"cost_basis":  113.63, "ref_value":   79.12, "sector": "Technology"},
-    "DUOL":  {"cost_basis":  226.24, "ref_value":   73.06, "sector": "Technology"},
+    # shares = fixed count from May-15 snapshot; snapshot_px = price on that date (fallback)
+    "META":  {"shares": 1.7249, "cost_basis": 1088.74, "snapshot_px":  643.88, "sector": "Technology"},
+    "AMZN":  {"shares": 5.2062, "cost_basis":  872.70, "snapshot_px":  205.17, "sector": "Technology"},
+    "MSFT":  {"shares": 2.2864, "cost_basis":  987.70, "snapshot_px":  453.13, "sector": "Technology"},
+    "GOOGL": {"shares": 4.8953, "cost_basis":  335.13, "snapshot_px":  163.96, "sector": "Technology"},
+    "NVDA":  {"shares": 5.4724, "cost_basis":  464.70, "snapshot_px":  134.83, "sector": "Technology"},
+    "LLY":   {"shares": 1.0034, "cost_basis":  520.22, "snapshot_px":  733.29, "sector": "Healthcare"},
+    "AMD":   {"shares": 4.3290, "cost_basis":  153.75, "snapshot_px":  114.99, "sector": "Technology"},
+    "VOO":   {"shares": 0.8662, "cost_basis":  428.84, "snapshot_px":  542.76, "sector": "ETF"},
+    "SGOL":  {"shares":13.0629, "cost_basis":  399.36, "snapshot_px":   30.83, "sector": "Commodity"},
+    "NFLX":  {"shares": 2.2718, "cost_basis":  252.63, "snapshot_px":  117.80, "sector": "Technology"},
+    "TSM":   {"shares": 1.2607, "cost_basis":  199.68, "snapshot_px":  194.22, "sector": "Technology"},
+    "QQQ":   {"shares": 0.4098, "cost_basis":  152.43, "snapshot_px":  519.25, "sector": "ETF"},
+    "AVGO":  {"shares": 0.8696, "cost_basis":  158.66, "snapshot_px":  232.64, "sector": "Technology"},
+    "SOFI":  {"shares":13.0699, "cost_basis":  230.50, "snapshot_px":   13.57, "sector": "Finance"},
+    "MARA":  {"shares": 7.5829, "cost_basis":  182.82, "snapshot_px":   15.68, "sector": "Crypto"},
+    "ORCL":  {"shares": 0.4964, "cost_basis":  113.63, "snapshot_px":  159.40, "sector": "Technology"},
+    "DUOL":  {"shares": 1.0000, "cost_basis":  226.24, "snapshot_px":   73.06, "sector": "Technology"},
 }
 TICKERS = list(PORTFOLIO.keys())
 
@@ -338,9 +339,9 @@ def fetch_history(ticker: str, period: str) -> pd.DataFrame:
 def build_df(prices: dict, prev: dict, thb_rate: float) -> pd.DataFrame:
     rows = []
     for ticker, info in PORTFOLIO.items():
-        cur_px  = prices.get(ticker) or info["ref_value"]
+        cur_px  = prices.get(ticker) or info["snapshot_px"]
         prv_px  = prev.get(ticker)   or cur_px
-        shares  = info["ref_value"] / cur_px if cur_px > 0 else 1.0
+        shares  = info["shares"]
         cur_val = shares * cur_px
         cost    = info["cost_basis"]
         pnl_usd = cur_val - cost
