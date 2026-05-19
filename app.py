@@ -524,7 +524,7 @@ def main():
             ))
             fig_bar.update_layout(**_base_layout(350,
                 xaxis=dict(showgrid=False, zeroline=True,
-                           zerolinecolor=CYAN+"44", zerolinewidth=1),
+                           zerolinecolor="rgba(0,212,255,0.27)", zerolinewidth=1),
                 yaxis=dict(showgrid=False),
             ))
             st.plotly_chart(fig_bar, use_container_width=True)
@@ -543,7 +543,7 @@ def main():
             marker=dict(
                 color=sec_colors,
                 opacity=0.8,
-                line=dict(color=CYAN+"44", width=1),
+                line=dict(color="rgba(0,212,255,0.27)", width=1),
             ),
             text=[f"${v:,.0f}" for v in sec["Value"]],
             textposition="outside",
