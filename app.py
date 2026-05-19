@@ -365,20 +365,19 @@ def build_df(prices: dict, prev: dict, thb_rate: float) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("Value_USD", ascending=False).reset_index(drop=True)
 
 
-# ── Chart helpers ─────────────────────────────────────────────────────────────
-def chart_layout(**kwargs):
-    base = dict(
+GRID_COLOR = "#0a2a40"
+
+def _base_layout(height, **kwargs):
+    """Return a clean plotly layout dict compatible with all Plotly versions."""
+    layout = dict(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font_color="#8ab8d0",
-        font_family="Rajdhani, sans-serif",
-        font_size=11,
+        height=height,
         margin=dict(t=10, b=10, l=10, r=10),
+        showlegend=kwargs.pop("showlegend", True),
     )
-    base.update(kwargs)
-    return base
-
-GRID_COLOR = "#0a2a40"
+    layout.update(kwargs)
+    return layout
 
 
 # ── Main app ──────────────────────────────────────────────────────────────────
@@ -505,8 +504,8 @@ def main():
                 x=0.5, y=0.5, font=dict(size=15, color=CYAN, family="Orbitron"),
                 showarrow=False,
             )
-            fig_pie.update_layout(**chart_layout(height=350,
-                                  legend=dict(font_size=9, orientation="v")))
+            fig_pie.update_layout(**_base_layout(350,
+                                  legend=dict(orientation="v")))
             st.plotly_chart(fig_pie, use_container_width=True)
 
         with col_r:
@@ -523,11 +522,10 @@ def main():
                 textfont=dict(size=9),
                 hovertemplate="<b>%{y}</b>: %{x:+.2f}%<extra></extra>",
             ))
-            fig_bar.update_layout(**chart_layout(
-                height=350,
+            fig_bar.update_layout(**_base_layout(350,
                 xaxis=dict(showgrid=False, zeroline=True,
                            zerolinecolor=CYAN+"44", zerolinewidth=1),
-                yaxis=dict(showgrid=False, tickfont=dict(size=9)),
+                yaxis=dict(showgrid=False),
             ))
             st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -553,8 +551,7 @@ def main():
             customdata=sec["PnL_pct"],
             hovertemplate="<b>%{x}</b><br>Value: $%{y:,.0f}<br>P&L: %{customdata:+.1f}%<extra></extra>",
         ))
-        fig_sec.update_layout(**chart_layout(
-            height=260,
+        fig_sec.update_layout(**_base_layout(260,
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=True, gridcolor=GRID_COLOR),
         ))
@@ -607,8 +604,8 @@ def main():
                 name=selected,
                 hovertemplate="$%{y:.2f}<extra></extra>",
             ))
-            fig_line.update_layout(**chart_layout(
-                height=300, hovermode="x unified",
+            fig_line.update_layout(**_base_layout(300,
+                hovermode="x unified",
                 xaxis=dict(showgrid=False),
                 yaxis=dict(showgrid=True, gridcolor=GRID_COLOR),
             ))
