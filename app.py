@@ -24,7 +24,7 @@ except ImportError:
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Mark | Trading Dashboard",
+    page_title="Pham's Trading Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -441,7 +441,7 @@ def main():
     # ── Header ───────────────────────────────────────────────────────────────
     st.markdown(f"""
     <div class='dash-header'>
-        <div class='dash-title'>📊 MARK — TRADING DASHBOARD</div>
+        <div class='dash-title'>📊 PHAM'S TRADING DASHBOARD</div>
         <div class='dash-subtitle'>
             Live Portfolio Intelligence &nbsp;·&nbsp;
             {datetime.now().strftime('%b %d, %Y  %H:%M')} &nbsp;·&nbsp;
