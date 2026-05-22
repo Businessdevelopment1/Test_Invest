@@ -402,6 +402,31 @@ def fetch_history(ticker: str, period: str) -> pd.DataFrame:
     return yf.download(ticker, period=period, auto_adjust=True, progress=False)
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def fetch_fear_greed():
+    """Return (value 0-100, label str) from alternative.me Fear & Greed API."""
+    try:
+        import urllib.request, json as _json
+        with urllib.request.urlopen(
+            "https://api.alternative.me/fng/?limit=1", timeout=6
+        ) as resp:
+            data = _json.loads(resp.read())
+        item = data["data"][0]
+        return int(item["value"]), str(item["value_classification"])
+    except Exception:
+        return None, "N/A"
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_vix():
+    """Return current VIX level (float) or None on failure."""
+    try:
+        v = yf.Ticker("^VIX").fast_info.last_price
+        return float(v) if v else None
+    except Exception:
+        return None
+
+
 # ── Portfolio build ───────────────────────────────────────────────────────────
 def build_df(prices: dict, prev: dict, thb_rate: float) -> pd.DataFrame:
     rows = []
@@ -474,6 +499,8 @@ def main():
         prices, prev = fetch_prices(st.session_state.bust)
         thb_rate     = fetch_thb_rate()
         df           = build_df(prices, prev, thb_rate)
+        fg_val, fg_label = fetch_fear_greed()
+        vix_val          = fetch_vix()
 
     total_val  = df["Value_USD"].sum()
     total_cost = df["Cost"].sum()
@@ -650,6 +677,138 @@ def main():
             yaxis=dict(showgrid=True, gridcolor=GRID_COLOR),
         ))
         st.plotly_chart(fig_sec, use_container_width=True)
+
+        # ── Market Sentiment ───────────────────────────────────────────────
+        st.markdown("<div class='section-title'>Market Sentiment</div>", unsafe_allow_html=True)
+        fg_col, vix_col = st.columns([3, 2])
+
+        with fg_col:
+            st.markdown("<div style='font-family:Orbitron,sans-serif;font-size:0.65rem;"
+                        "color:#00d4ff99;letter-spacing:0.18em;text-transform:uppercase;"
+                        "margin-bottom:6px;'>Fear & Greed Index</div>", unsafe_allow_html=True)
+            if fg_val is not None:
+                # Needle colour matches the sentiment zone
+                if fg_val <= 25:
+                    needle_col = RED
+                elif fg_val <= 45:
+                    needle_col = "#ff8c00"
+                elif fg_val <= 55:
+                    needle_col = YELLOW
+                elif fg_val <= 75:
+                    needle_col = "#7fff7f"
+                else:
+                    needle_col = GREEN
+
+                fig_fg = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=fg_val,
+                    number=dict(
+                        font=dict(color=needle_col, family="Orbitron", size=34),
+                        suffix="",
+                    ),
+                    title=dict(
+                        text=f"<b>{fg_label}</b>",
+                        font=dict(color=needle_col, family="Orbitron", size=12),
+                    ),
+                    gauge=dict(
+                        axis=dict(
+                            range=[0, 100],
+                            tickvals=[0, 25, 45, 55, 75, 100],
+                            ticktext=["0", "25", "45", "55", "75", "100"],
+                            tickcolor=CYAN,
+                            tickfont=dict(color=CYAN, size=9),
+                        ),
+                        bar=dict(color=needle_col, thickness=0.22),
+                        bgcolor="rgba(0,0,0,0)",
+                        borderwidth=0,
+                        steps=[
+                            dict(range=[0,  25], color="rgba(255,51,102,0.35)"),
+                            dict(range=[25, 45], color="rgba(255,140,0,0.30)"),
+                            dict(range=[45, 55], color="rgba(255,215,0,0.30)"),
+                            dict(range=[55, 75], color="rgba(127,255,127,0.25)"),
+                            dict(range=[75,100], color="rgba(0,255,136,0.35)"),
+                        ],
+                        threshold=dict(
+                            line=dict(color=CYAN, width=2),
+                            thickness=0.80,
+                            value=50,  # neutral midpoint reference line
+                        ),
+                    ),
+                ))
+                fig_fg.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    height=240,
+                    margin=dict(t=30, b=10, l=20, r=20),
+                )
+                st.plotly_chart(fig_fg, use_container_width=True)
+                st.markdown(
+                    f"<div style='text-align:center;font-size:0.72rem;color:#6699bb;"
+                    f"margin-top:-8px;'>Extreme Fear 0–25 · Fear 25–45 · Neutral 45–55 "
+                    f"· Greed 55–75 · Extreme Greed 75–100</div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.info("Fear & Greed data unavailable.")
+
+        with vix_col:
+            st.markdown("<div style='font-family:Orbitron,sans-serif;font-size:0.65rem;"
+                        "color:#00d4ff99;letter-spacing:0.18em;text-transform:uppercase;"
+                        "margin-bottom:6px;'>VIX Volatility Index</div>", unsafe_allow_html=True)
+            if vix_val is not None:
+                # VIX interpretation thresholds
+                if vix_val >= 30:
+                    vix_color = RED
+                    vix_status = "HIGH FEAR"
+                    vix_desc   = "Extreme volatility — market stress elevated"
+                elif vix_val >= 20:
+                    vix_color = "#ff8c00"
+                    vix_status = "ELEVATED"
+                    vix_desc   = "Above-average volatility — proceed with caution"
+                elif vix_val >= 15:
+                    vix_color = YELLOW
+                    vix_status = "MODERATE"
+                    vix_desc   = "Normal volatility range"
+                else:
+                    vix_color = GREEN
+                    vix_status = "CALM"
+                    vix_desc   = "Low volatility — market complacency"
+
+                st.markdown(f"""
+                <div class='kpi-card' style='margin-top:8px;padding:28px 20px 24px;'>
+                    <div class='kpi-label'>CBOE VIX</div>
+                    <div class='kpi-value' style='font-size:3rem;color:{vix_color};
+                         text-shadow:0 0 20px {vix_color}88;margin:14px 0 8px;'>
+                        {vix_val:.2f}
+                    </div>
+                    <div style='font-family:Orbitron,sans-serif;font-size:0.70rem;
+                         font-weight:700;color:{vix_color};letter-spacing:0.18em;
+                         margin-bottom:10px;text-shadow:0 0 8px {vix_color}66;'>
+                        ● {vix_status}
+                    </div>
+                    <div class='kpi-sub'>{vix_desc}</div>
+                    <div style='margin-top:14px;height:6px;border-radius:3px;
+                         background:linear-gradient(90deg,
+                             rgba(0,255,136,0.6) 0%,
+                             rgba(255,215,0,0.6) 40%,
+                             rgba(255,140,0,0.6) 60%,
+                             rgba(255,51,102,0.6) 100%);
+                         position:relative;'>
+                        <div style='position:absolute;top:-3px;
+                             left:{min(max((vix_val/50)*100, 2), 98):.0f}%;
+                             transform:translateX(-50%);
+                             width:12px;height:12px;border-radius:50%;
+                             background:{vix_color};
+                             box-shadow:0 0 8px {vix_color};'></div>
+                    </div>
+                    <div style='display:flex;justify-content:space-between;
+                         font-size:0.60rem;color:#336688;margin-top:4px;'>
+                        <span>Low (≤15)</span><span>Normal (20)</span><span>High (≥30)</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.info("VIX data unavailable.")
 
     # ══ TAB 2 — HOLDINGS ═════════════════════════════════════════════════════
     with tab2:
