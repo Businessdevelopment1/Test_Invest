@@ -26,11 +26,11 @@ st.set_page_config(
 
 # ── Portfolio snapshot (May 15, 2026) ─────────────────────────────────────────
 PORTFOLIO = {
-    # shares = fixed count from May-15 snapshot; snapshot_px = price on that date (fallback)
-    "META":  {"shares": 1.7249, "cost_basis": 1088.74, "snapshot_px":  643.88, "sector": "Technology"},
-    "AMZN":  {"shares": 5.2062, "cost_basis":  872.70, "snapshot_px":  205.17, "sector": "Technology"},
-    "MSFT":  {"shares": 2.2864, "cost_basis":  987.70, "snapshot_px":  453.13, "sector": "Technology"},
-    "GOOGL": {"shares": 4.8953, "cost_basis":  335.13, "snapshot_px":  163.96, "sector": "Technology"},
+    # shares = actual count from DIME brokerage; cost_basis = total invested; snapshot_px = fallback price
+    "META":  {"shares": 1.7958170, "cost_basis": 1088.74, "snapshot_px":  607.38, "sector": "Technology"},
+    "AMZN":  {"shares": 3.9972687, "cost_basis":  872.70, "snapshot_px":  268.46, "sector": "Technology"},
+    "MSFT":  {"shares": 2.5305418, "cost_basis":  987.70, "snapshot_px":  419.09, "sector": "Technology"},
+    "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  387.66, "sector": "Technology"},
     "NVDA":  {"shares": 5.4724, "cost_basis":  464.70, "snapshot_px":  134.83, "sector": "Technology"},
     "LLY":   {"shares": 1.0034, "cost_basis":  520.22, "snapshot_px":  733.29, "sector": "Healthcare"},
     "AMD":   {"shares": 4.3290, "cost_basis":  153.75, "snapshot_px":  114.99, "sector": "Technology"},
@@ -285,11 +285,25 @@ def fetch_prices(bust: int = 0):
     try:
         raw = yf.download(
             TICKERS, period="5d", auto_adjust=True,
-            progress=False, threads=True, group_by="ticker",
+            progress=False,
+            group_by="column",   # outer=price-type, inner=ticker → raw["Close"] works
         )
-        closes = raw["Close"].dropna(how="all")
-        current = closes.iloc[-1].to_dict()
-        prev    = closes.iloc[-2].to_dict() if len(closes) >= 2 else current
+        # Extract close prices — columns are tickers
+        if isinstance(raw.columns, pd.MultiIndex):
+            if "Close" in raw.columns.get_level_values(0):
+                closes = raw["Close"]
+            else:
+                closes = raw.xs("Close", axis=1, level=1)
+        else:
+            closes = raw[["Close"]].rename(columns={"Close": TICKERS[0]})
+
+        closes = closes.dropna(how="all")
+        if closes.empty:
+            return {}, {}
+
+        current = {str(c): float(v) for c, v in closes.iloc[-1].items() if pd.notna(v)}
+        prev    = {str(c): float(v) for c, v in closes.iloc[-2].items() if pd.notna(v)} \
+                  if len(closes) >= 2 else current
         return current, prev
     except Exception:
         return {}, {}
