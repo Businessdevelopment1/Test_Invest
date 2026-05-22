@@ -544,6 +544,7 @@ def main():
                 hovertemplate="<b>%{y}</b>: %{x:+.2f}%<extra></extra>",
             ))
             fig_bar.update_layout(**_base_layout(350,
+                showlegend=False,
                 xaxis=dict(showgrid=False, zeroline=True,
                            zerolinecolor="rgba(0,212,255,0.27)", zerolinewidth=1),
                 yaxis=dict(showgrid=False),
