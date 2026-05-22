@@ -47,7 +47,7 @@ PORTFOLIO = {
     "QQQ":   {"shares": 0.2956201, "cost_basis":  152.43, "snapshot_px":  714.51, "sector": "ETF"},
     "AVGO":  {"shares": 0.4599534, "cost_basis":  158.66, "snapshot_px":  414.57, "sector": "Technology"},
     "SOFI":  {"shares":11.0710855, "cost_basis":  230.50, "snapshot_px":   15.65, "sector": "Finance"},
-    "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   13.55, "sector": "Crypto"},
+    "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   13.55, "sector": "Technology"},
     "ORCL":  {"shares": 0.4044665, "cost_basis":  113.63, "snapshot_px":  189.77, "sector": "Technology"},
     "DUOL":  {"shares": 0.6692898, "cost_basis":  226.24, "snapshot_px":  105.64, "sector": "Technology"},
 }
@@ -584,6 +584,7 @@ def main():
             hovertemplate="<b>%{x}</b><br>Value: $%{y:,.0f}<br>P&L: %{customdata:+.1f}%<extra></extra>",
         ))
         fig_sec.update_layout(**_base_layout(260,
+            showlegend=False,
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=True, gridcolor=GRID_COLOR),
         ))
