@@ -37,12 +37,12 @@ PORTFOLIO = {
     "VOO":   {"shares": 0.6835977, "cost_basis":  428.84, "snapshot_px":  682.84, "sector": "ETF"},
     "SGOL":  {"shares":13.0629, "cost_basis":  399.36, "snapshot_px":   30.83, "sector": "Commodity"},
     "NFLX":  {"shares": 2.2718, "cost_basis":  252.63, "snapshot_px":  117.80, "sector": "Technology"},
-    "TSM":   {"shares": 1.2607, "cost_basis":  199.68, "snapshot_px":  194.22, "sector": "Technology"},
+    "TSM":   {"shares": 0.5861632, "cost_basis":  199.68, "snapshot_px":  407.15, "sector": "Technology"},
     "QQQ":   {"shares": 0.4098, "cost_basis":  152.43, "snapshot_px":  519.25, "sector": "ETF"},
-    "AVGO":  {"shares": 0.8696, "cost_basis":  158.66, "snapshot_px":  232.64, "sector": "Technology"},
-    "SOFI":  {"shares":13.0699, "cost_basis":  230.50, "snapshot_px":   13.57, "sector": "Finance"},
-    "MARA":  {"shares": 7.5829, "cost_basis":  182.82, "snapshot_px":   15.68, "sector": "Crypto"},
-    "ORCL":  {"shares": 0.4964, "cost_basis":  113.63, "snapshot_px":  159.40, "sector": "Technology"},
+    "AVGO":  {"shares": 0.4599534, "cost_basis":  158.66, "snapshot_px":  414.57, "sector": "Technology"},
+    "SOFI":  {"shares":11.0710855, "cost_basis":  230.50, "snapshot_px":   15.65, "sector": "Finance"},
+    "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   13.55, "sector": "Crypto"},
+    "ORCL":  {"shares": 0.4044665, "cost_basis":  113.63, "snapshot_px":  189.77, "sector": "Technology"},
     "DUOL":  {"shares": 1.0000, "cost_basis":  226.24, "snapshot_px":   73.06, "sector": "Technology"},
 }
 TICKERS = list(PORTFOLIO.keys())
