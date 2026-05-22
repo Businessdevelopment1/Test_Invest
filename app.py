@@ -281,6 +281,53 @@ html, body, [data-testid="stAppViewContainer"],
     margin: 12px 0;
     border: none;
 }}
+
+/* ── Profile badge ── */
+.profile-badge {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}}
+.profile-circle {{
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid {CYAN};
+    box-shadow: 0 0 14px {CYAN}88, inset 0 0 8px {CYAN}22;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #031525, #020f1e);
+}}
+.profile-circle img {{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}}
+.profile-initials {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: {CYAN};
+    letter-spacing: 0.05em;
+}}
+.profile-name {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.60rem;
+    font-weight: 600;
+    color: {CYAN}cc;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px {CYAN}66;
+    white-space: nowrap;
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -439,13 +486,27 @@ def main():
     alerts_df  = df[df["Alert"] != "ok"]
 
     # ── Header ───────────────────────────────────────────────────────────────
+    # Load profile photo if present in assets/, otherwise fall back to initials
+    import base64, os
+    _photo_path = os.path.join(os.path.dirname(__file__), "assets", "profile.jpg")
+    if os.path.exists(_photo_path):
+        with open(_photo_path, "rb") as _f:
+            _b64 = base64.b64encode(_f.read()).decode()
+        _avatar = f"<img src='data:image/jpeg;base64,{_b64}' />"
+    else:
+        _avatar = "<span class='profile-initials'>PD</span>"
+
     st.markdown(f"""
-    <div class='dash-header'>
+    <div class='dash-header' style='position:relative;'>
         <div class='dash-title'>📊 PHAM'S TRADING DASHBOARD</div>
         <div class='dash-subtitle'>
             Live Portfolio Intelligence &nbsp;·&nbsp;
             {datetime.now().strftime('%b %d, %Y  %H:%M')} &nbsp;·&nbsp;
             17 Positions
+        </div>
+        <div class='profile-badge'>
+            <div class='profile-circle'>{_avatar}</div>
+            <span class='profile-name'>Pham<br>Deevilaiphan</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
