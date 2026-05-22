@@ -810,6 +810,37 @@ def main():
             else:
                 st.info("VIX data unavailable.")
 
+        # Entry-level signal note
+        # Highlight if BOTH conditions are currently met
+        _fg_met  = fg_val  is not None and fg_val  < 25
+        _vix_met = vix_val is not None and vix_val > 30
+        if _fg_met and _vix_met:
+            _note_border = "#00ff88"
+            _note_bg     = "rgba(0,255,136,0.08)"
+            _note_icon   = "🟢"
+            _note_status = "ENTRY CONDITIONS MET"
+        else:
+            _note_border = "#00d4ff55"
+            _note_bg     = "rgba(0,212,255,0.04)"
+            _note_icon   = "📌"
+            _note_status = "Entry conditions not yet met"
+
+        st.markdown(f"""
+        <div style='border:1px solid {_note_border};border-left:3px solid {_note_border};
+             border-radius:4px;background:{_note_bg};
+             padding:9px 16px;margin-top:10px;'>
+            <span style='font-family:Orbitron,sans-serif;font-size:0.62rem;
+                  letter-spacing:0.15em;color:{_note_border};'>{_note_icon} {_note_status}</span>
+            <span style='font-size:0.78rem;color:#6699bb;margin-left:14px;'>
+                Ideal entry signal: &nbsp;
+                <b style='color:{"#00ff88" if _fg_met else "#aaaaaa"}'>F&amp;G &lt; 25</b>
+                &nbsp;(Extreme Fear) &nbsp;+&nbsp;
+                <b style='color:{"#00ff88" if _vix_met else "#aaaaaa"}'>VIX &gt; 30</b>
+                &nbsp;(High Fear)
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+
     # ══ TAB 2 — HOLDINGS ═════════════════════════════════════════════════════
     with tab2:
         st.markdown("<div class='section-title'>Live Positions — All 17 Stocks</div>", unsafe_allow_html=True)
