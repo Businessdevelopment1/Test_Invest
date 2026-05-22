@@ -16,6 +16,12 @@ try:
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
+try:
+    from streamlit_autorefresh import st_autorefresh
+    AUTOREFRESH_AVAILABLE = True
+except ImportError:
+    AUTOREFRESH_AVAILABLE = False
+
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Mark | Trading Dashboard",
@@ -401,6 +407,10 @@ def _base_layout(height, **kwargs):
 
 # ── Main app ──────────────────────────────────────────────────────────────────
 def main():
+    # Auto-refresh every 5 minutes so P&L and Day % stay live
+    if AUTOREFRESH_AVAILABLE:
+        st_autorefresh(interval=5 * 60 * 1000, key="price_refresh")
+
     for key, default in [("chat", []), ("mark_brief", None),
                           ("brief_time", None), ("bust", 0)]:
         if key not in st.session_state:
