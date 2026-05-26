@@ -38,7 +38,7 @@ PORTFOLIO = {
     "MSFT":  {"shares": 2.5305418, "cost_basis":  987.70, "snapshot_px":  419.09, "sector": "Technology"},
     "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  387.66, "sector": "Technology"},
     "NVDA":  {"shares": 3.1299373, "cost_basis":  464.71, "snapshot_px":  219.51, "sector": "Technology"},
-    "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1041.65, "sector": "Healthcare"},
+    "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1065.00, "sector": "Healthcare"},
     "AMD":   {"shares": 1.1069433, "cost_basis":  153.75, "snapshot_px":  449.59, "sector": "Technology"},
     "VOO":   {"shares": 0.6835977, "cost_basis":  428.84, "snapshot_px":  682.84, "sector": "ETF"},
     "SGOL":  {"shares": 9.0910788, "cost_basis":  399.36, "snapshot_px":   43.24, "sector": "Commodity"},
