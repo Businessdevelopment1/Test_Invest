@@ -50,6 +50,7 @@ PORTFOLIO = {
     "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   13.55, "sector": "Technology"},
     "ORCL":  {"shares": 0.4044665, "cost_basis":  113.63, "snapshot_px":  189.77, "sector": "Technology"},
     "DUOL":  {"shares": 0.6692898, "cost_basis":  226.24, "snapshot_px":  105.64, "sector": "Technology"},
+    "VST":   {"shares":16.7433510, "cost_basis": 2744.29, "snapshot_px":  160.23, "sector": "Energy"},
 }
 TICKERS = list(PORTFOLIO.keys())
 
@@ -529,7 +530,7 @@ def main():
         <div class='dash-subtitle'>
             Live Portfolio Intelligence &nbsp;·&nbsp;
             {datetime.now().strftime('%b %d, %Y  %H:%M')} &nbsp;·&nbsp;
-            17 Positions
+            18 Positions
         </div>
         <div class='profile-badge'>
             <div class='profile-circle'>{_avatar}</div>
@@ -560,7 +561,7 @@ def main():
         st.markdown(kpi("Today P&L", f"{day_pl_p:+.2f}%",
                         f"${day_pl:+,.0f}", cls), unsafe_allow_html=True)
     with c4:
-        st.markdown(kpi("Positions", "17",
+        st.markdown(kpi("Positions", "18",
                         f"{len(alerts_df)} need attention", "yellow"), unsafe_allow_html=True)
     with c5:
         st.markdown(kpi("USD / THB", f"{thb_rate:.2f}",
@@ -603,7 +604,7 @@ def main():
                 "#00d4ff","#00b8d9","#009cb3","#00808c","#006466",
                 "#004d4d","#003333","#001a1a","#00fff0","#00e8d8",
                 "#00d1c0","#00baa8","#00a390","#008c78","#007560",
-                "#005e48","#004730",
+                "#005e48","#004730","#ffd700",  # VST — gold to stand out as Energy
             ]
             fig_pie = go.Figure(go.Pie(
                 labels=df["Ticker"],
@@ -843,7 +844,7 @@ def main():
 
     # ══ TAB 2 — HOLDINGS ═════════════════════════════════════════════════════
     with tab2:
-        st.markdown("<div class='section-title'>Live Positions — All 17 Stocks</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>Live Positions — All 18 Stocks</div>", unsafe_allow_html=True)
 
         display = df.rename(columns={
             "Price":"Price (USD)", "Value_USD":"Value (USD)", "Value_THB":"Value (THB)",
