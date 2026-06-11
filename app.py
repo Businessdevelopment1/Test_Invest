@@ -293,6 +293,76 @@ html, body, [data-testid="stAppViewContainer"],
     top: 50%;
     transform: translateY(-50%);
 }}
+
+/* ── KPI responsive grid ── */
+.kpi-grid {{
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}}
+@media screen and (max-width: 1100px) {{
+    .kpi-grid {{ grid-template-columns: repeat(3, 1fr); }}
+}}
+@media screen and (max-width: 640px) {{
+    .kpi-grid {{ grid-template-columns: repeat(2, 1fr); }}
+}}
+
+/* ── Mobile overrides ── */
+@media screen and (max-width: 640px) {{
+    /* Shrink header title so it fits */
+    .dash-title {{
+        font-size: 1.3rem !important;
+        letter-spacing: 0.05em !important;
+    }}
+    .dash-subtitle {{
+        font-size: 0.60rem !important;
+        letter-spacing: 0.10em !important;
+        line-height: 1.6 !important;
+    }}
+    /* Un-anchor the profile badge — flow it below the title */
+    .dash-header {{
+        padding-bottom: 14px !important;
+    }}
+    .profile-badge {{
+        position: relative !important;
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
+        justify-content: center !important;
+        margin-top: 10px !important;
+    }}
+    /* KPI card sizing */
+    .kpi-card  {{ padding: 12px 8px !important; }}
+    .kpi-value {{ font-size: 1.15rem !important; }}
+    .kpi-label {{ font-size: 0.56rem !important; }}
+    .kpi-sub   {{ font-size: 0.66rem !important; }}
+    /* Stack ALL Streamlit side-by-side columns vertically */
+    [data-testid="stHorizontalBlock"] {{
+        flex-wrap: wrap !important;
+    }}
+    [data-testid="stHorizontalBlock"] > [data-testid="column"] {{
+        min-width: 100% !important;
+        width: 100% !important;
+        flex: 0 0 100% !important;
+    }}
+    /* Shrink tab labels */
+    [data-testid="stTabs"] [role="tab"] {{
+        font-size: 0.54rem !important;
+        padding: 6px 8px !important;
+        letter-spacing: 0.07em !important;
+    }}
+    .section-title {{
+        font-size: 0.62rem !important;
+    }}
+    .mark-bubble  {{ font-size: 0.83rem !important; line-height: 1.55 !important; }}
+    .news-card a  {{ font-size: 0.82rem !important; }}
+    .news-meta    {{ font-size: 0.65rem !important; }}
+    /* Alert banners */
+    .alert-crit, .alert-warn {{
+        font-size: 0.78rem !important;
+    }}
+}}
 .profile-circle {{
     width: 44px;
     height: 44px;
@@ -539,9 +609,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── KPI Row ──────────────────────────────────────────────────────────────
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-
+    # ── KPI Row (CSS grid — stacks 2-col on mobile, 3-col on tablet, 6-col desktop)
     def kpi(label, value, sub, cls):
         return f"""<div class='kpi-card'>
             <div class='kpi-label'>{label}</div>
@@ -549,28 +617,21 @@ def main():
             <div class='kpi-sub'>{sub}</div>
         </div>"""
 
-    with c1:
-        st.markdown(kpi("Portfolio Value", f"${total_val:,.0f}",
-                        f"฿{total_val*thb_rate:,.0f}", "cyan"), unsafe_allow_html=True)
-    with c2:
-        cls = "green" if total_pl >= 0 else "red"
-        st.markdown(kpi("Total P&L", f"{total_pl_p:+.1f}%",
-                        f"${total_pl:+,.0f}", cls), unsafe_allow_html=True)
-    with c3:
-        cls = "green" if day_pl >= 0 else "red"
-        st.markdown(kpi("Today P&L", f"{day_pl_p:+.2f}%",
-                        f"${day_pl:+,.0f}", cls), unsafe_allow_html=True)
-    with c4:
-        st.markdown(kpi("Positions", "18",
-                        f"{len(alerts_df)} need attention", "yellow"), unsafe_allow_html=True)
-    with c5:
-        st.markdown(kpi("USD / THB", f"{thb_rate:.2f}",
-                        "Live rate", "cyan"), unsafe_allow_html=True)
-    with c6:
-        st.markdown(kpi("Cost Basis", f"${total_cost:,.0f}",
-                        "Original invested", "cyan"), unsafe_allow_html=True)
+    total_pl_cls = "green" if total_pl >= 0 else "red"
+    day_pl_cls   = "green" if day_pl   >= 0 else "red"
 
-    # Refresh button (small, top right)
+    st.markdown(f"""
+    <div class='kpi-grid'>
+        {kpi("Portfolio Value", f"${total_val:,.0f}", f"฿{total_val*thb_rate:,.0f}", "cyan")}
+        {kpi("Total P&amp;L",   f"{total_pl_p:+.1f}%", f"${total_pl:+,.0f}", total_pl_cls)}
+        {kpi("Today P&amp;L",   f"{day_pl_p:+.2f}%",  f"${day_pl:+,.0f}",   day_pl_cls)}
+        {kpi("Positions",       "18", f"{len(alerts_df)} need attention", "yellow")}
+        {kpi("USD / THB",       f"{thb_rate:.2f}", "Live rate", "cyan")}
+        {kpi("Cost Basis",      f"${total_cost:,.0f}", "Original invested", "cyan")}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Refresh button
     _, rbtn = st.columns([11, 1])
     with rbtn:
         if st.button("⟳", help="Refresh prices"):
