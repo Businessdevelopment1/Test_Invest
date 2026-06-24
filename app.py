@@ -54,6 +54,28 @@ PORTFOLIO = {
 }
 TICKERS = list(PORTFOLIO.keys())
 
+# ── Brand / CI colours for pie chart ─────────────────────────────────────────
+BRAND_COLORS = {
+    "META":  "#0082FB",   # Meta blue
+    "AMZN":  "#FF9900",   # Amazon orange
+    "MSFT":  "#00A4EF",   # Microsoft blue
+    "GOOGL": "#4285F4",   # Google blue
+    "NVDA":  "#76B900",   # NVIDIA green
+    "LLY":   "#D52B1E",   # Eli Lilly red
+    "AMD":   "#ED1C24",   # AMD red
+    "VOO":   "#821429",   # Vanguard dark red/maroon
+    "SGOL":  "#D4AF37",   # Gold (Aberdeen/SGOL)
+    "NFLX":  "#E50914",   # Netflix red
+    "TSM":   "#0066B3",   # TSMC blue
+    "QQQ":   "#003087",   # Invesco navy
+    "AVGO":  "#CF0A2C",   # Broadcom red
+    "SOFI":  "#7B2D8B",   # SoFi purple
+    "MARA":  "#F7941D",   # Marathon Digital orange
+    "ORCL":  "#C74634",   # Oracle orange-red
+    "DUOL":  "#58CC02",   # Duolingo green
+    "VST":   "#00A859",   # Vistra Energy green
+}
+
 # ── Colour palette ────────────────────────────────────────────────────────────
 CYAN   = "#00d4ff"
 CYAN2  = "#00fff0"
@@ -661,28 +683,30 @@ def main():
 
         with col_l:
             st.markdown("<div class='section-title'>Portfolio Allocation</div>", unsafe_allow_html=True)
-            cyan_seq = [
-                "#00d4ff","#00b8d9","#009cb3","#00808c","#006466",
-                "#004d4d","#003333","#001a1a","#00fff0","#00e8d8",
-                "#00d1c0","#00baa8","#00a390","#008c78","#007560",
-                "#005e48","#004730","#ffd700",  # VST — gold to stand out as Energy
-            ]
+            # Brand CI colours mapped by ticker (order-safe — df is sorted by value)
+            pie_colors = [BRAND_COLORS.get(t, CYAN) for t in df["Ticker"]]
             fig_pie = go.Figure(go.Pie(
                 labels=df["Ticker"],
                 values=df["Value_USD"],
                 hole=0.55,
                 marker=dict(
-                    colors=cyan_seq,
-                    line=dict(color=BG, width=2),
+                    colors=pie_colors,
+                    line=dict(color="#010e1a", width=2.5),
                 ),
                 textposition="inside",
                 textinfo="percent+label",
-                textfont=dict(size=10, color="white"),
-                hovertemplate="<b>%{label}</b><br>$%{value:,.0f}<br>%{percent}<extra></extra>",
+                textfont=dict(size=10, color="white", family="Orbitron"),
+                hovertemplate=(
+                    "<b>%{label}</b><br>"
+                    "$%{value:,.0f}<br>"
+                    "%{percent}<extra></extra>"
+                ),
+                insidetextorientation="radial",
             ))
             fig_pie.add_annotation(
-                text=f"<b>${total_val:,.0f}</b>",
-                x=0.5, y=0.5, font=dict(size=15, color=CYAN, family="Orbitron"),
+                text=f"<b>${total_val:,.0f}</b><br><span style='font-size:10px'>TOTAL</span>",
+                x=0.5, y=0.5,
+                font=dict(size=16, color=CYAN, family="Orbitron"),
                 showarrow=False,
             )
             fig_pie.update_layout(**_base_layout(350,
