@@ -9,6 +9,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+import base64, os
 
 try:
     import anthropic
@@ -82,25 +83,84 @@ CYAN2  = "#00fff0"
 GREEN  = "#00ff88"
 RED    = "#ff3366"
 YELLOW = "#ffd700"
-BG     = "#020b18"
-CARD   = "#041525"
-BORDER = "#0a3a5a"
+BG     = "#000000"
+CARD   = "#060d1c"
+BORDER = "#0a3a6a"
+
+# ── Circuit background SVG (tiling 300×300, base64 encoded) ──────────────────
+_nodes = [
+    (30,90),(60,60),(180,60),(240,120),(240,180),(120,240),(270,240),(30,210)
+]
+_node_svg = "".join(
+    f'<circle cx="{x}" cy="{y}" r="2.4" fill="none" stroke="#00d4ff" '
+    f'stroke-width="0.8" opacity="0.38"/>'
+    f'<circle cx="{x}" cy="{y}" r="1" fill="#00d4ff" opacity="0.55"/>'
+    for x,y in _nodes
+)
+_accent_nodes = [(60,60),(240,180),(180,30)]
+_accent_svg = "".join(
+    f'<circle cx="{x}" cy="{y}" r="2.6" fill="none" stroke="#00fff0" '
+    f'stroke-width="0.9" opacity="0.42"/>'
+    f'<circle cx="{x}" cy="{y}" r="1" fill="#00fff0" opacity="0.6"/>'
+    for x,y in _accent_nodes
+)
+_grid_h = "".join(
+    f'<line x1="0" y1="{y}" x2="300" y2="{y}" stroke="#00d4ff" '
+    f'stroke-width="0.35" opacity="0.07"/>' for y in range(60,300,60)
+)
+_grid_v = "".join(
+    f'<line x1="{x}" y1="0" x2="{x}" y2="300" stroke="#00d4ff" '
+    f'stroke-width="0.35" opacity="0.07"/>' for x in range(60,300,60)
+)
+_dots = "".join(
+    f'<circle cx="{x}" cy="{y}" r="0.9" fill="#00d4ff" opacity="0.10"/>'
+    for x in range(60,300,60) for y in range(60,300,60)
+)
+_traces = (
+    '<path d="M 0 90 L 30 90 L 30 60 L 60 60" fill="none" stroke="#00d4ff" stroke-width="0.9" opacity="0.22"/>'
+    '<path d="M 120 0 L 120 30 L 180 30 L 180 60" fill="none" stroke="#00d4ff" stroke-width="0.85" opacity="0.20"/>'
+    '<path d="M 180 120 L 240 120 L 240 180" fill="none" stroke="#00d4ff" stroke-width="0.85" opacity="0.20"/>'
+    '<path d="M 60 180 L 60 240 L 120 240" fill="none" stroke="#00d4ff" stroke-width="0.8" opacity="0.18"/>'
+    '<path d="M 240 240 L 270 240 L 270 300" fill="none" stroke="#00fff0" stroke-width="0.7" opacity="0.16"/>'
+    '<path d="M 0 210 L 30 210 L 30 240" fill="none" stroke="#00d4ff" stroke-width="0.7" opacity="0.16"/>'
+    '<path d="M 300 150 L 270 150 L 270 180 L 240 180" fill="none" stroke="#00d4ff" stroke-width="0.7" opacity="0.16"/>'
+    '<path d="M 90 0 L 90 30 L 60 30 L 60 60" fill="none" stroke="#00d4ff" stroke-width="0.65" opacity="0.15"/>'
+    # Diagonal micro-traces for extra detail
+    '<path d="M 150 90 L 180 90" fill="none" stroke="#00d4ff" stroke-width="0.5" opacity="0.12"/>'
+    '<path d="M 90 150 L 90 180" fill="none" stroke="#00d4ff" stroke-width="0.5" opacity="0.12"/>'
+)
+_circuit_svg = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">'
+    + _grid_h + _grid_v + _traces + _dots + _node_svg + _accent_svg
+    + '</svg>'
+)
+_circuit_uri = 'data:image/svg+xml;base64,' + base64.b64encode(_circuit_svg.encode()).decode()
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Rajdhani:wght@400;500;600&display=swap');
 
-/* ── Base ── */
+/* ── Base — true black + layered sci-fi atmosphere ── */
 html, body, [data-testid="stAppViewContainer"],
 [data-testid="stMain"], .main {{
-    background: {BG} !important;
+    background-color: {BG} !important;
     background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(0,60,120,0.15) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(0,100,180,0.10) 0%, transparent 50%);
+        radial-gradient(ellipse 70% 60% at 0% 0%,     rgba(0,100,220,0.28) 0%, transparent 100%),
+        radial-gradient(ellipse 60% 70% at 100% 100%,  rgba(0,160,255,0.22) 0%, transparent 100%),
+        radial-gradient(ellipse 45% 40% at 100% 0%,    rgba(0,60,160,0.14)  0%, transparent 100%),
+        radial-gradient(ellipse 45% 40% at 0% 100%,    rgba(0,50,140,0.14)  0%, transparent 100%),
+        radial-gradient(ellipse 40% 30% at 50% 50%,    rgba(0,20,70,0.45)   0%, transparent 100%),
+        url("{_circuit_uri}") !important;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat !important;
+    background-size: auto, auto, auto, auto, auto, 280px 280px !important;
 }}
-[data-testid="stHeader"]  {{ background: {BG} !important; }}
-[data-testid="stSidebar"] {{ background: #010e1a !important; }}
+[data-testid="stHeader"]  {{
+    background-color: {BG} !important;
+    background-image:
+        radial-gradient(ellipse 80% 200% at 0% 50%, rgba(0,100,220,0.15) 0%, transparent 100%) !important;
+}}
+[data-testid="stSidebar"] {{ background: #010208 !important; }}
 * {{ font-family: 'Rajdhani', sans-serif; }}
 
 /* ── Hide default streamlit chrome ── */
@@ -607,7 +667,6 @@ def main():
 
     # ── Header ───────────────────────────────────────────────────────────────
     # Load profile photo if present in assets/, otherwise fall back to initials
-    import base64, os
     _photo_path = os.path.join(os.path.dirname(__file__), "assets", "profile.jpg")
     if os.path.exists(_photo_path):
         with open(_photo_path, "rb") as _f:
