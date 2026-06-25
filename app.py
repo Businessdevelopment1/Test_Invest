@@ -36,9 +36,9 @@ PORTFOLIO = {
     # shares = actual count from DIME brokerage; cost_basis = total invested; snapshot_px = fallback price
     "META":  {"shares": 1.7958170, "cost_basis": 1088.74, "snapshot_px":  607.38, "sector": "Technology"},
     "AMZN":  {"shares": 3.9972687, "cost_basis":  872.70, "snapshot_px":  268.46, "sector": "Technology"},
-    "MSFT":  {"shares": 2.5305418, "cost_basis":  987.70, "snapshot_px":  419.09, "sector": "Technology"},
+    "MSFT":  {"shares": 3.0592461, "cost_basis": 1187.38, "snapshot_px":  365.46, "sector": "Technology"},
     "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  387.66, "sector": "Technology"},
-    "NVDA":  {"shares": 3.8786287, "cost_basis":  616.04, "snapshot_px":  200.04, "sector": "Technology"},
+    "NVDA":  {"shares": 4.6225851, "cost_basis":  765.05, "snapshot_px":  199.00, "sector": "Technology"},
     "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1065.00, "sector": "Healthcare"},
     "AMD":   {"shares": 0.7217041, "cost_basis":  100.24, "snapshot_px":  519.85, "sector": "Technology"},
     "VOO":   {"shares": 0.9038415, "cost_basis":  578.43, "snapshot_px":  676.34, "sector": "ETF"},
