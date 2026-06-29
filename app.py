@@ -36,7 +36,7 @@ PORTFOLIO = {
     # shares = actual count from DIME brokerage; cost_basis = total invested; snapshot_px = fallback price
     "META":  {"shares": 1.7958170, "cost_basis": 1088.74, "snapshot_px":  607.38, "sector": "Technology"},
     "AMZN":  {"shares": 3.9972687, "cost_basis":  872.70, "snapshot_px":  268.46, "sector": "Technology"},
-    "MSFT":  {"shares": 3.0592461, "cost_basis": 1187.38, "snapshot_px":  365.46, "sector": "Technology"},
+    "MSFT":  {"shares": 3.3989592, "cost_basis": 1306.80, "snapshot_px":  372.97, "sector": "Technology"},
     "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  387.66, "sector": "Technology"},
     "NVDA":  {"shares": 4.6225851, "cost_basis":  765.05, "snapshot_px":  199.00, "sector": "Technology"},
     "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1065.00, "sector": "Healthcare"},
