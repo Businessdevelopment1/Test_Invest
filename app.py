@@ -50,7 +50,7 @@ PORTFOLIO = {
     "AVGO":  {"shares": 0.4599534, "cost_basis":  158.66, "snapshot_px":  414.57, "sector": "Technology"},
     "SOFI":  {"shares":11.0710855, "cost_basis":  230.50, "snapshot_px":   15.65, "sector": "Finance"},
     "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   13.55, "sector": "Technology"},
-    "ORCL":  {"shares": 0.4044665, "cost_basis":  113.63, "snapshot_px":  189.77, "sector": "Technology"},
+    "ORCL":  {"shares": 0.4044665, "cost_basis":  113.63, "snapshot_px":  142.07, "sector": "Technology"},
     "DUOL":  {"shares": 0.6692898, "cost_basis":  226.24, "snapshot_px":  105.64, "sector": "Technology"},
     "VST":   {"shares":13.3514998, "cost_basis": 2149.49, "snapshot_px":  138.94, "sector": "Energy"},
 }
