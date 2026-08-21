@@ -40,10 +40,11 @@ PORTFOLIO = {
     "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  387.66, "sector": "Technology"},
     "NVDA":  {"shares": 4.6225851, "cost_basis":  765.05, "snapshot_px":  216.85, "sector": "Technology"},
     "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1244.40, "sector": "Healthcare"},
-    "AMD":   {"shares": 0.7217041, "cost_basis":  100.24, "snapshot_px":  519.85, "sector": "Technology"},
-    "VOO":   {"shares": 0.9038415, "cost_basis":  578.43, "snapshot_px":  676.34, "sector": "ETF"},
-    "SGOL":  {"shares": 9.0910788, "cost_basis":  399.36, "snapshot_px":   43.24, "sector": "Commodity"},
-    "NFLX":  {"shares": 3.0782325, "cost_basis":  252.63, "snapshot_px":   89.30, "sector": "Technology"},
+    "AMD":   {"shares": 0.6011252, "cost_basis":   83.49, "snapshot_px":  469.46, "sector": "Technology"},
+    "VOO":   {"shares": 0.9038415, "cost_basis":  578.43, "snapshot_px":  701.01, "sector": "ETF"},
+    "SGOL":  {"shares": 9.0910788, "cost_basis":  399.36, "snapshot_px":   43.12, "sector": "Commodity"},
+    "NFLX":  {"shares": 3.0782325, "cost_basis":  252.63, "snapshot_px":   80.14, "sector": "Technology"},
+    "CEG":   {"shares": 1.1369817, "cost_basis":  295.36, "snapshot_px":  272.92, "sector": "Energy"},
     "TSM":   {"shares": 0.5861632, "cost_basis":  199.68, "snapshot_px":  407.15, "sector": "Technology"},
     "QQQ":   {"shares": 0.2956201, "cost_basis":  152.43, "snapshot_px":  714.51, "sector": "ETF"},
     "AVGO":  {"shares": 0.4599534, "cost_basis":  158.66, "snapshot_px":  414.57, "sector": "Technology"},
@@ -67,6 +68,7 @@ BRAND_COLORS = {
     "VOO":   "#821429",   # Vanguard dark red/maroon
     "SGOL":  "#D4AF37",   # Gold (Aberdeen/SGOL)
     "NFLX":  "#E50914",   # Netflix red
+    "CEG":   "#005F9E",   # Constellation Energy blue
     "TSM":   "#0066B3",   # TSMC blue
     "QQQ":   "#003087",   # Invesco navy
     "AVGO":  "#CF0A2C",   # Broadcom red
