@@ -34,12 +34,12 @@ st.set_page_config(
 # ── Portfolio snapshot (May 15, 2026) ─────────────────────────────────────────
 PORTFOLIO = {
     # shares = actual count from DIME brokerage; cost_basis = total invested; snapshot_px = fallback price
-    "META":  {"shares": 1.7958170, "cost_basis": 1088.74, "snapshot_px":  607.38, "sector": "Technology"},
-    "AMZN":  {"shares": 3.9972687, "cost_basis":  872.70, "snapshot_px":  268.46, "sector": "Technology"},
+    "META":  {"shares": 1.8243347, "cost_basis":  998.40, "snapshot_px":  545.83, "sector": "Technology"},
+    "AMZN":  {"shares": 3.9972687, "cost_basis":  872.70, "snapshot_px":  260.11, "sector": "Technology"},
     "MSFT":  {"shares": 3.3989592, "cost_basis": 1306.80, "snapshot_px":  372.97, "sector": "Technology"},
     "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  387.66, "sector": "Technology"},
-    "NVDA":  {"shares": 4.6225851, "cost_basis":  765.05, "snapshot_px":  199.00, "sector": "Technology"},
-    "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1065.00, "sector": "Healthcare"},
+    "NVDA":  {"shares": 4.6225851, "cost_basis":  765.05, "snapshot_px":  216.85, "sector": "Technology"},
+    "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1244.40, "sector": "Healthcare"},
     "AMD":   {"shares": 0.7217041, "cost_basis":  100.24, "snapshot_px":  519.85, "sector": "Technology"},
     "VOO":   {"shares": 0.9038415, "cost_basis":  578.43, "snapshot_px":  676.34, "sector": "ETF"},
     "SGOL":  {"shares": 9.0910788, "cost_basis":  399.36, "snapshot_px":   43.24, "sector": "Commodity"},
@@ -51,7 +51,7 @@ PORTFOLIO = {
     "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   13.55, "sector": "Technology"},
     "ORCL":  {"shares": 0.4044665, "cost_basis":  113.63, "snapshot_px":  189.77, "sector": "Technology"},
     "DUOL":  {"shares": 0.6692898, "cost_basis":  226.24, "snapshot_px":  105.64, "sector": "Technology"},
-    "VST":   {"shares":16.7433510, "cost_basis": 2744.29, "snapshot_px":  160.23, "sector": "Energy"},
+    "VST":   {"shares":13.3514998, "cost_basis": 2149.49, "snapshot_px":  138.94, "sector": "Energy"},
 }
 TICKERS = list(PORTFOLIO.keys())
 
