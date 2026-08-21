@@ -36,7 +36,7 @@ PORTFOLIO = {
     # shares = actual count from DIME brokerage; cost_basis = total invested; snapshot_px = fallback price
     "META":  {"shares": 1.8243347, "cost_basis":  998.40, "snapshot_px":  545.83, "sector": "Technology"},
     "AMZN":  {"shares": 3.9972687, "cost_basis":  872.70, "snapshot_px":  260.11, "sector": "Technology"},
-    "MSFT":  {"shares": 3.3989592, "cost_basis": 1306.80, "snapshot_px":  372.97, "sector": "Technology"},
+    "MSFT":  {"shares": 0.1312695, "cost_basis":   48.30, "snapshot_px":  481.15, "sector": "Technology"},
     "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  387.66, "sector": "Technology"},
     "NVDA":  {"shares": 4.6225851, "cost_basis":  765.05, "snapshot_px":  216.85, "sector": "Technology"},
     "LLY":   {"shares": 0.7308499, "cost_basis":  520.22, "snapshot_px": 1244.40, "sector": "Healthcare"},
@@ -47,12 +47,14 @@ PORTFOLIO = {
     "CEG":   {"shares": 1.1369817, "cost_basis":  295.36, "snapshot_px":  272.92, "sector": "Energy"},
     "TSM":   {"shares": 0.5861632, "cost_basis":  199.68, "snapshot_px":  407.15, "sector": "Technology"},
     "QQQ":   {"shares": 0.2956201, "cost_basis":  152.43, "snapshot_px":  714.51, "sector": "ETF"},
-    "AVGO":  {"shares": 0.4599534, "cost_basis":  158.66, "snapshot_px":  414.57, "sector": "Technology"},
-    "SOFI":  {"shares":11.0710855, "cost_basis":  230.50, "snapshot_px":   15.65, "sector": "Finance"},
-    "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   13.55, "sector": "Technology"},
+    "AVGO":  {"shares": 0.4599534, "cost_basis":  158.66, "snapshot_px":  364.03, "sector": "Technology"},
+    "SOFI":  {"shares":11.0710855, "cost_basis":  230.50, "snapshot_px":   17.92, "sector": "Finance"},
+    "MARA":  {"shares": 8.9466601, "cost_basis":  182.83, "snapshot_px":   11.15, "sector": "Technology"},
     "ORCL":  {"shares": 0.4044665, "cost_basis":  113.63, "snapshot_px":  142.07, "sector": "Technology"},
-    "DUOL":  {"shares": 0.6692898, "cost_basis":  226.24, "snapshot_px":  105.64, "sector": "Technology"},
+    "DUOL":  {"shares": 0.6692898, "cost_basis":  226.24, "snapshot_px":  147.03, "sector": "Technology"},
     "VST":   {"shares":13.3514998, "cost_basis": 2149.49, "snapshot_px":  138.94, "sector": "Energy"},
+    "AS":    {"shares": 2.5593848, "cost_basis":   89.86, "snapshot_px":   32.53, "sector": "Finance"},
+    "UBER":  {"shares": 1.3919527, "cost_basis":  103.99, "snapshot_px":   78.55, "sector": "Technology"},
 }
 TICKERS = list(PORTFOLIO.keys())
 
@@ -73,6 +75,8 @@ BRAND_COLORS = {
     "QQQ":   "#003087",   # Invesco navy
     "AVGO":  "#CF0A2C",   # Broadcom red
     "SOFI":  "#7B2D8B",   # SoFi purple
+    "AS":    "#005288",   # Airbus blue
+    "UBER":  "#000000",   # Uber black
     "MARA":  "#F7941D",   # Marathon Digital orange
     "ORCL":  "#C74634",   # Oracle orange-red
     "DUOL":  "#58CC02",   # Duolingo green
