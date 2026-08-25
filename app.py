@@ -643,7 +643,9 @@ def main():
         st_autorefresh(interval=5 * 60 * 1000, key="price_refresh")
 
     for key, default in [("chat", []), ("mark_brief", None),
-                          ("brief_time", None), ("bust", 0)]:
+                          ("brief_time", None), ("bust", 0),
+                          ("buy_targets", []), ("bt_edit_idx", None),
+                          ("bt_show_form", False)]:
         if key not in st.session_state:
             st.session_state[key] = default
 
@@ -740,7 +742,7 @@ def main():
                     unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
-    tab1, tab2, tab3, tab4 = st.tabs(["  OVERVIEW  ", "  HOLDINGS  ", "  NEWS FEED  ", "  MARK AI  "])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["  OVERVIEW  ", "  HOLDINGS  ", "  NEWS FEED  ", "  MARK AI  ", "  BUY TARGET  "])
 
     # ══ TAB 1 — OVERVIEW ═════════════════════════════════════════════════════
     with tab1:
@@ -1134,6 +1136,278 @@ Ask me anything:
             if st.button("🗑  Clear chat"):
                 st.session_state.chat = []
                 st.rerun()
+
+    # ══ TAB 5 — BUY TARGET ═══════════════════════════════════════════════════
+    with tab5:
+        st.markdown("<div class='section-title'>Buy Target Watchlist</div>", unsafe_allow_html=True)
+
+        # ── Fetch live prices for all watchlist tickers ───────────────────
+        @st.cache_data(ttl=300, show_spinner=False)
+        def fetch_bt_prices(tickers_key: str):
+            tickers_list = tickers_key.split(",")
+            if not tickers_list:
+                return {}
+            try:
+                if len(tickers_list) == 1:
+                    t = yf.Ticker(tickers_list[0])
+                    px = t.fast_info.last_price
+                    return {tickers_list[0]: float(px)} if px else {}
+                raw = yf.download(tickers_list, period="2d", auto_adjust=True,
+                                  progress=False, group_by="column")
+                if isinstance(raw.columns, pd.MultiIndex):
+                    closes = raw["Close"] if "Close" in raw.columns.get_level_values(0) else raw.xs("Close", axis=1, level=1)
+                else:
+                    closes = raw[["Close"]].rename(columns={"Close": tickers_list[0]})
+                closes = closes.dropna(how="all")
+                return {str(c): float(v) for c, v in closes.iloc[-1].items() if pd.notna(v)} if not closes.empty else {}
+            except Exception:
+                return {}
+
+        bt_list = st.session_state.buy_targets
+        # Get current prices for all watchlist tickers
+        if bt_list:
+            bt_tickers_key = ",".join(sorted({b["ticker"] for b in bt_list}))
+            bt_prices = fetch_bt_prices(bt_tickers_key)
+        else:
+            bt_prices = {}
+
+        # ── Helper: enrich each target with live data ─────────────────────
+        def enrich_targets(targets, live_prices):
+            out = []
+            for b in targets:
+                cur = live_prices.get(b["ticker"], b.get("snapshot_px", 0.0))
+                tgt = b["target_price"]
+                diff = cur - tgt
+                dist_pct = (diff / tgt * 100) if tgt > 0 else 0.0
+                if cur <= tgt:
+                    status = "Buy Now"
+                elif dist_pct <= 5:
+                    status = "Near Target"
+                else:
+                    status = "Wait"
+                out.append({**b, "current_price": cur, "diff": diff,
+                             "dist_pct": dist_pct, "status": status})
+            return out
+
+        enriched = enrich_targets(bt_list, bt_prices)
+
+        # ── Summary cards ─────────────────────────────────────────────────
+        total_tracked   = len(enriched)
+        buy_now_count   = sum(1 for e in enriched if e["status"] == "Buy Now")
+        near_count      = sum(1 for e in enriched if e["status"] == "Near Target")
+        avg_dist        = (sum(e["dist_pct"] for e in enriched) / total_tracked) if total_tracked else 0
+        closest = min(enriched, key=lambda x: x["dist_pct"]) if enriched else None
+        closest_label   = closest["ticker"] if closest else "—"
+
+        def bt_kpi(label, value, sub, cls="cyan"):
+            return f"""<div class='kpi-card'>
+                <div class='kpi-label'>{label}</div>
+                <div class='kpi-value {cls}'>{value}</div>
+                <div class='kpi-sub'>{sub}</div>
+            </div>"""
+
+        st.markdown(f"""
+        <div style='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;'>
+            {bt_kpi("Stocks Tracked", str(total_tracked), "in watchlist")}
+            {bt_kpi("Buy Now", str(buy_now_count), "at or below target", "green")}
+            {bt_kpi("Closest to Target", closest_label, f"{closest['dist_pct']:+.1f}% away" if closest else "—", "yellow")}
+            {bt_kpi("Avg Distance", f"{avg_dist:+.1f}%", f"{near_count} near target")}
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div class='glow-line'></div>", unsafe_allow_html=True)
+
+        # ── Add / Edit form ───────────────────────────────────────────────
+        edit_idx = st.session_state.bt_edit_idx
+        is_edit  = edit_idx is not None and 0 <= edit_idx < len(bt_list)
+
+        col_add, col_refresh = st.columns([1, 5])
+        with col_add:
+            btn_label = "✏  Edit Target" if is_edit else "+ Add Buy Target"
+            if st.button(btn_label, use_container_width=True):
+                st.session_state.bt_show_form = not st.session_state.bt_show_form
+                if not st.session_state.bt_show_form:
+                    st.session_state.bt_edit_idx = None
+                st.rerun()
+        with col_refresh:
+            if st.button("⟳  Refresh Prices", use_container_width=False):
+                fetch_bt_prices.clear()
+                st.rerun()
+
+        if st.session_state.bt_show_form:
+            prefill = bt_list[edit_idx] if is_edit else {}
+            with st.form("bt_form", clear_on_submit=True):
+                st.markdown(f"<div class='section-title'>{'Edit' if is_edit else 'New'} Buy Target</div>",
+                            unsafe_allow_html=True)
+                fc1, fc2, fc3 = st.columns(3)
+                with fc1:
+                    f_name   = st.text_input("Stock Name", value=prefill.get("name", ""))
+                    f_ticker = st.text_input("Ticker Symbol", value=prefill.get("ticker", "")).upper()
+                with fc2:
+                    f_target = st.number_input("My Buy Target Price ($)", min_value=0.01,
+                                               value=float(prefill.get("target_price", 100.0)), step=0.01)
+                    f_amount = st.number_input("Planned Investment ($)", min_value=0.0,
+                                               value=float(prefill.get("investment_amount", 500.0)), step=10.0)
+                with fc3:
+                    prio_opts = ["High", "Medium", "Low"]
+                    f_prio = st.selectbox("Priority", prio_opts,
+                                         index=prio_opts.index(prefill.get("priority", "Medium")))
+                    f_notes = st.text_area("Notes / Thesis", value=prefill.get("notes", ""), height=80)
+
+                sub_col, cancel_col = st.columns([1, 1])
+                with sub_col:
+                    submitted = st.form_submit_button("💾  Save Target", use_container_width=True)
+                with cancel_col:
+                    cancelled = st.form_submit_button("✕  Cancel", use_container_width=True)
+
+                if submitted and f_ticker:
+                    entry = {"name": f_name, "ticker": f_ticker.strip().upper(),
+                             "target_price": f_target, "investment_amount": f_amount,
+                             "priority": f_prio, "notes": f_notes,
+                             "snapshot_px": bt_prices.get(f_ticker, 0.0)}
+                    if is_edit:
+                        st.session_state.buy_targets[edit_idx] = entry
+                    else:
+                        st.session_state.buy_targets.append(entry)
+                    st.session_state.bt_show_form = False
+                    st.session_state.bt_edit_idx  = None
+                    fetch_bt_prices.clear()
+                    st.rerun()
+                if cancelled:
+                    st.session_state.bt_show_form = False
+                    st.session_state.bt_edit_idx  = None
+                    st.rerun()
+
+        # ── Main table ────────────────────────────────────────────────────
+        if not enriched:
+            st.markdown("""
+            <div style='text-align:center;padding:60px 0;color:#336688;'>
+                <div style='font-family:Orbitron,sans-serif;font-size:0.85rem;letter-spacing:0.2em;'>
+                    NO BUY TARGETS YET
+                </div>
+                <div style='font-size:0.78rem;margin-top:8px;'>
+                    Click "+ Add Buy Target" to start tracking stocks you want to buy at a specific price.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='section-title'>All Targets</div>", unsafe_allow_html=True)
+
+            PRIO_COLOR = {"High": RED, "Medium": YELLOW, "Low": "#6699bb"}
+            STATUS_COLOR = {"Buy Now": GREEN, "Near Target": YELLOW, "Wait": "#6699bb"}
+
+            # Header row
+            hc = st.columns([2, 1.2, 1.2, 1.2, 1.2, 1.2, 1, 1.5, 1.8])
+            headers = ["Stock", "Current $", "Target $", "Diff ($)", "Dist %", "Invest $", "Priority", "Status", "Action"]
+            for col, h in zip(hc, headers):
+                col.markdown(f"<div style='font-family:Orbitron,sans-serif;font-size:0.60rem;"
+                             f"color:{CYAN}99;letter-spacing:0.12em;text-transform:uppercase;"
+                             f"padding:4px 0 6px;border-bottom:1px solid {CYAN}22;'>{h}</div>",
+                             unsafe_allow_html=True)
+
+            for idx, e in enumerate(enriched):
+                sc = st.columns([2, 1.2, 1.2, 1.2, 1.2, 1.2, 1, 1.5, 1.8])
+                diff_cls = "green" if e["diff"] <= 0 else "red"
+                dist_cls = "green" if e["dist_pct"] <= 0 else ("yellow" if e["dist_pct"] <= 5 else "red")
+                s_color  = STATUS_COLOR.get(e["status"], "#6699bb")
+                p_color  = PRIO_COLOR.get(e["priority"], "#6699bb")
+
+                sc[0].markdown(f"<div style='font-size:0.85rem;font-weight:600;color:{CYAN};padding:4px 0;'>"
+                               f"{e['ticker']}</div>"
+                               f"<div style='font-size:0.68rem;color:#336688;'>{e['name']}</div>",
+                               unsafe_allow_html=True)
+                sc[1].markdown(f"<div style='font-size:0.85rem;color:{CYAN};padding:4px 0;'>${e['current_price']:.2f}</div>",
+                               unsafe_allow_html=True)
+                sc[2].markdown(f"<div style='font-size:0.85rem;color:#b0d8f0;padding:4px 0;'>${e['target_price']:.2f}</div>",
+                               unsafe_allow_html=True)
+                sc[3].markdown(f"<div class='{diff_cls}' style='font-size:0.85rem;padding:4px 0;'>${e['diff']:+.2f}</div>",
+                               unsafe_allow_html=True)
+                # Progress bar + pct
+                bar_pct = max(0, min(100, 100 - e["dist_pct"])) if e["dist_pct"] > 0 else 100
+                sc[4].markdown(
+                    f"<div style='padding:4px 0;'>"
+                    f"<div class='{dist_cls}' style='font-size:0.78rem;'>{e['dist_pct']:+.1f}%</div>"
+                    f"<div style='height:4px;border-radius:2px;background:{CYAN}22;margin-top:3px;'>"
+                    f"<div style='height:100%;width:{bar_pct:.0f}%;border-radius:2px;"
+                    f"background:{s_color};'></div></div></div>",
+                    unsafe_allow_html=True)
+                sc[5].markdown(f"<div style='font-size:0.82rem;color:#b0d8f0;padding:4px 0;'>${e['investment_amount']:,.0f}</div>",
+                               unsafe_allow_html=True)
+                sc[6].markdown(f"<div style='font-size:0.72rem;font-family:Orbitron,sans-serif;"
+                               f"color:{p_color};padding:4px 0;'>{e['priority']}</div>",
+                               unsafe_allow_html=True)
+                sc[7].markdown(f"<div style='font-size:0.72rem;font-family:Orbitron,sans-serif;"
+                               f"color:{s_color};padding:4px 0;'>● {e['status']}</div>",
+                               unsafe_allow_html=True)
+                with sc[8]:
+                    ea, da = st.columns(2)
+                    with ea:
+                        if st.button("✏", key=f"bt_edit_{idx}", help="Edit"):
+                            st.session_state.bt_edit_idx  = idx
+                            st.session_state.bt_show_form = True
+                            st.rerun()
+                    with da:
+                        if st.button("🗑", key=f"bt_del_{idx}", help="Delete"):
+                            st.session_state.buy_targets.pop(idx)
+                            st.session_state.bt_edit_idx  = None
+                            st.session_state.bt_show_form = False
+                            st.rerun()
+
+                st.markdown("<div style='height:1px;background:rgba(0,212,255,0.08);margin:2px 0;'></div>",
+                            unsafe_allow_html=True)
+
+            # ── Opportunities sections ─────────────────────────────────
+            buy_now  = [e for e in enriched if e["status"] == "Buy Now"]
+            near     = [e for e in enriched if e["status"] == "Near Target"]
+            top3     = sorted([e for e in enriched if e["status"] == "Wait"], key=lambda x: x["dist_pct"])[:3]
+
+            if buy_now or near:
+                st.markdown("<div class='section-title'>🟢 Ready to Buy</div>", unsafe_allow_html=True)
+                for e in sorted(buy_now + near, key=lambda x: x["dist_pct"]):
+                    s_color = STATUS_COLOR.get(e["status"], GREEN)
+                    st.markdown(f"""
+                    <div style='background:linear-gradient(90deg,{s_color}10,transparent);
+                         border:1px solid {s_color}44;border-left:3px solid {s_color};
+                         border-radius:4px;padding:10px 16px;margin:4px 0;
+                         display:flex;justify-content:space-between;align-items:center;'>
+                        <div>
+                            <span style='font-family:Orbitron,sans-serif;font-size:0.78rem;
+                                  color:{s_color};font-weight:700;'>{e['ticker']}</span>
+                            <span style='font-size:0.75rem;color:#6699bb;margin-left:10px;'>{e['name']}</span>
+                        </div>
+                        <div style='text-align:right;'>
+                            <span style='font-size:0.82rem;color:{CYAN};'>${e['current_price']:.2f}</span>
+                            <span style='font-size:0.72rem;color:#6699bb;margin:0 8px;'>target</span>
+                            <span style='font-size:0.82rem;color:#b0d8f0;'>${e['target_price']:.2f}</span>
+                            <span style='font-family:Orbitron,sans-serif;font-size:0.65rem;
+                                  color:{s_color};margin-left:12px;'>● {e['status']}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            if top3:
+                st.markdown("<div class='section-title'>⏳ Top 3 Closest to Target</div>", unsafe_allow_html=True)
+                for i, e in enumerate(top3, 1):
+                    st.markdown(f"""
+                    <div style='background:linear-gradient(90deg,{CYAN}08,transparent);
+                         border:1px solid {CYAN}22;border-left:3px solid {YELLOW};
+                         border-radius:4px;padding:10px 16px;margin:4px 0;
+                         display:flex;justify-content:space-between;align-items:center;'>
+                        <div>
+                            <span style='font-family:Orbitron,sans-serif;font-size:0.70rem;color:{YELLOW};'>#{i}</span>
+                            <span style='font-family:Orbitron,sans-serif;font-size:0.78rem;color:{CYAN};margin-left:8px;'>
+                                {e['ticker']}</span>
+                            <span style='font-size:0.75rem;color:#6699bb;margin-left:10px;'>{e['name']}</span>
+                        </div>
+                        <div style='text-align:right;'>
+                            <span style='font-size:0.82rem;color:{CYAN};'>${e['current_price']:.2f}</span>
+                            <span style='font-size:0.72rem;color:#6699bb;margin:0 8px;'>target</span>
+                            <span style='font-size:0.82rem;color:#b0d8f0;'>${e['target_price']:.2f}</span>
+                            <span style='font-size:0.78rem;color:{YELLOW};margin-left:12px;'>
+                                {e['dist_pct']:+.1f}% away</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 
 # ── Mark helpers ──────────────────────────────────────────────────────────────
