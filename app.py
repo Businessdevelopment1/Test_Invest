@@ -661,7 +661,7 @@ def main():
     for key, default in [("chat", []), ("mark_brief", None),
                           ("brief_time", None), ("bust", 0),
                           ("buy_targets", _DEFAULT_BUY_TARGETS), ("bt_edit_idx", None),
-                          ("bt_show_form", False)]:
+                          ("bt_show_form", False), ("bt_notified", set())]:
         if key not in st.session_state:
             st.session_state[key] = default
 
@@ -1295,6 +1295,55 @@ Ask me anything:
                     st.rerun()
 
         # ── Main table ────────────────────────────────────────────────────
+        # ── Browser notification component ────────────────────────────────
+        buy_now_hits = [e for e in enriched if e["status"] == "Buy Now"]
+        new_hits = [e for e in buy_now_hits
+                    if e["ticker"] not in st.session_state.bt_notified]
+        if new_hits:
+            for e in new_hits:
+                st.session_state.bt_notified.add(e["ticker"])
+            alerts_json = "[" + ",".join(
+                f'{{"ticker":"{e["ticker"]}","price":{e["current_price"]:.2f},"target":{e["target_price"]:.2f}}}'
+                for e in new_hits
+            ) + "]"
+            notif_html = f"""
+            <script>
+            (function(){{
+                var alerts = {alerts_json};
+                function fire(){{
+                    alerts.forEach(function(a){{
+                        new Notification("🎯 Buy Target Hit: " + a.ticker, {{
+                            body: a.ticker + " is at $" + a.price.toFixed(2) + " — your target was $" + a.target.toFixed(2),
+                            icon: "https://financialmodelingprep.com/image-stock/" + a.ticker + ".png"
+                        }});
+                    }});
+                }}
+                if (Notification.permission === "granted") {{
+                    fire();
+                }} else if (Notification.permission !== "denied") {{
+                    Notification.requestPermission().then(function(p){{
+                        if (p === "granted") fire();
+                    }});
+                }}
+            }})();
+            </script>
+            """
+            st.components.v1.html(notif_html, height=0)
+        elif not st.session_state.bt_notified:
+            # First load — request notification permission silently
+            st.components.v1.html("""
+            <script>
+            if (Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+            </script>
+            """, height=0)
+        # Reset notified set when a stock moves back above target
+        still_buy_now_tickers = {e["ticker"] for e in buy_now_hits}
+        st.session_state.bt_notified = {
+            t for t in st.session_state.bt_notified if t in still_buy_now_tickers
+        }
+
         if not enriched:
             st.markdown("""
             <div style='text-align:center;padding:60px 0;color:#336688;'>
@@ -1313,7 +1362,7 @@ Ask me anything:
             STATUS_COLOR = {"Buy Now": GREEN, "Near Target": YELLOW, "Wait": "#6699bb"}
 
             # Header row
-            hc = st.columns([2, 1.2, 1.2, 1.2, 1.2, 1.2, 1, 1.5, 1.8])
+            hc = st.columns([2.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1, 1.5, 1.8])
             headers = ["Stock", "Current $", "Target $", "Diff ($)", "Dist %", "Invest $", "Priority", "Status", "Action"]
             for col, h in zip(hc, headers):
                 col.markdown(f"<div style='font-family:Orbitron,sans-serif;font-size:0.60rem;"
@@ -1322,16 +1371,28 @@ Ask me anything:
                              unsafe_allow_html=True)
 
             for idx, e in enumerate(enriched):
-                sc = st.columns([2, 1.2, 1.2, 1.2, 1.2, 1.2, 1, 1.5, 1.8])
+                sc = st.columns([2.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1, 1.5, 1.8])
                 diff_cls = "green" if e["diff"] <= 0 else "red"
                 dist_cls = "green" if e["dist_pct"] <= 0 else ("yellow" if e["dist_pct"] <= 5 else "red")
                 s_color  = STATUS_COLOR.get(e["status"], "#6699bb")
                 p_color  = PRIO_COLOR.get(e["priority"], "#6699bb")
+                logo_url = f"https://financialmodelingprep.com/image-stock/{e['ticker']}.png"
+                fallback = f"https://assets.parqet.com/logos/symbol/{e['ticker']}?format=png"
 
-                sc[0].markdown(f"<div style='font-size:0.85rem;font-weight:600;color:{CYAN};padding:4px 0;'>"
-                               f"{e['ticker']}</div>"
-                               f"<div style='font-size:0.68rem;color:#336688;'>{e['name']}</div>",
-                               unsafe_allow_html=True)
+                sc[0].markdown(
+                    f"<div style='display:flex;align-items:center;gap:8px;padding:4px 0;'>"
+                    f"<div style='width:28px;height:28px;border-radius:6px;overflow:hidden;"
+                    f"background:#031e35;border:1px solid {CYAN}22;flex-shrink:0;"
+                    f"display:flex;align-items:center;justify-content:center;'>"
+                    f"<img src='{logo_url}' width='24' height='24' "
+                    f"style='object-fit:contain;' "
+                    f"onerror=\"this.src='{fallback}';this.onerror=null;\" />"
+                    f"</div>"
+                    f"<div>"
+                    f"<div style='font-size:0.85rem;font-weight:600;color:{CYAN};line-height:1.2;'>{e['ticker']}</div>"
+                    f"<div style='font-size:0.65rem;color:#336688;line-height:1.2;'>{e['name']}</div>"
+                    f"</div></div>",
+                    unsafe_allow_html=True)
                 sc[1].markdown(f"<div style='font-size:0.85rem;color:{CYAN};padding:4px 0;'>${e['current_price']:.2f}</div>",
                                unsafe_allow_html=True)
                 sc[2].markdown(f"<div style='font-size:0.85rem;color:#b0d8f0;padding:4px 0;'>${e['target_price']:.2f}</div>",
