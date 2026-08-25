@@ -642,9 +642,25 @@ def main():
     if AUTOREFRESH_AVAILABLE:
         st_autorefresh(interval=5 * 60 * 1000, key="price_refresh")
 
+    _DEFAULT_BUY_TARGETS = [
+        {"name": "Google",     "ticker": "GOOGL", "target_price": 250.0,  "investment_amount": 500.0, "priority": "High",   "notes": "", "snapshot_px": 0.0},
+        {"name": "Mastercard", "ticker": "MA",    "target_price": 450.0,  "investment_amount": 500.0, "priority": "High",   "notes": "", "snapshot_px": 0.0},
+        {"name": "Amazon",     "ticker": "AMZN",  "target_price": 200.0,  "investment_amount": 500.0, "priority": "High",   "notes": "", "snapshot_px": 0.0},
+        {"name": "Meta",       "ticker": "META",  "target_price": 450.0,  "investment_amount": 500.0, "priority": "High",   "notes": "", "snapshot_px": 0.0},
+        {"name": "S&P Global", "ticker": "SPGI",  "target_price": 350.0,  "investment_amount": 500.0, "priority": "Medium", "notes": "", "snapshot_px": 0.0},
+        {"name": "ASML",       "ticker": "ASML",  "target_price": 1200.0, "investment_amount": 500.0, "priority": "High",   "notes": "", "snapshot_px": 0.0},
+        {"name": "Netflix",    "ticker": "NFLX",  "target_price": 60.0,   "investment_amount": 500.0, "priority": "Medium", "notes": "", "snapshot_px": 0.0},
+        {"name": "Microsoft",  "ticker": "MSFT",  "target_price": 400.0,  "investment_amount": 500.0, "priority": "High",   "notes": "", "snapshot_px": 0.0},
+        {"name": "Costco",     "ticker": "COST",  "target_price": 600.0,  "investment_amount": 500.0, "priority": "Medium", "notes": "", "snapshot_px": 0.0},
+        {"name": "Texas Roadhouse", "ticker": "TXRH", "target_price": 140.0, "investment_amount": 500.0, "priority": "Low", "notes": "", "snapshot_px": 0.0},
+        {"name": "Moody's",    "ticker": "MCO",   "target_price": 375.0,  "investment_amount": 500.0, "priority": "Medium", "notes": "", "snapshot_px": 0.0},
+        {"name": "Duolingo",   "ticker": "DUOL",  "target_price": 90.0,   "investment_amount": 500.0, "priority": "Medium", "notes": "", "snapshot_px": 0.0},
+        {"name": "DoorDash",   "ticker": "DASH",  "target_price": 120.0,  "investment_amount": 500.0, "priority": "Low",    "notes": "", "snapshot_px": 0.0},
+        {"name": "Uber",       "ticker": "UBER",  "target_price": 60.0,   "investment_amount": 500.0, "priority": "Medium", "notes": "", "snapshot_px": 0.0},
+    ]
     for key, default in [("chat", []), ("mark_brief", None),
                           ("brief_time", None), ("bust", 0),
-                          ("buy_targets", []), ("bt_edit_idx", None),
+                          ("buy_targets", _DEFAULT_BUY_TARGETS), ("bt_edit_idx", None),
                           ("bt_show_form", False)]:
         if key not in st.session_state:
             st.session_state[key] = default
