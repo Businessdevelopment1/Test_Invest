@@ -847,6 +847,44 @@ def main():
         ))
         st.plotly_chart(fig_sec, use_container_width=True)
 
+        # ── Top Holdings logo cards ────────────────────────────────────────
+        st.markdown("<div class='section-title'>Top Holdings</div>", unsafe_allow_html=True)
+        top_holdings = df.head(7)
+        cards_html = "<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:4px;'>"
+        for _, row in top_holdings.iterrows():
+            t       = row["Ticker"]
+            val     = row["Value_USD"]
+            pnl_p   = row["PnL_pct"]
+            day_p   = row["Day_pct"]
+            clr     = GREEN if pnl_p >= 0 else RED
+            day_clr = GREEN if day_p >= 0 else RED
+            bc      = BRAND_COLORS.get(t, CYAN)
+            logo    = f"https://financialmodelingprep.com/image-stock/{t}.png"
+            fallbk  = f"https://assets.parqet.com/logos/symbol/{t}?format=png"
+            cards_html += f"""
+            <div style='background:linear-gradient(160deg,{CARD} 0%,#031e35 100%);
+                 border:1px solid {bc}44;border-top:2px solid {bc};border-radius:8px;
+                 padding:12px 10px;text-align:center;
+                 box-shadow:0 0 16px {bc}18,inset 0 0 20px rgba(0,0,0,0.2);
+                 position:relative;overflow:hidden;'>
+                <div style='position:absolute;top:0;left:0;right:0;height:1px;
+                     background:linear-gradient(90deg,transparent,{bc}66,transparent);'></div>
+                <div style='width:36px;height:36px;border-radius:8px;
+                     background:rgba(0,0,0,0.35);border:1px solid {bc}55;
+                     display:flex;align-items:center;justify-content:center;
+                     margin:0 auto 8px;overflow:hidden;'>
+                    <img src='{logo}' width='28' height='28' style='object-fit:contain;'
+                         onerror="this.src='{fallbk}';this.onerror=null;" />
+                </div>
+                <div style='font-family:Orbitron,sans-serif;font-size:0.65rem;
+                     font-weight:700;color:{bc};letter-spacing:0.08em;margin-bottom:3px;'>{t}</div>
+                <div style='font-size:0.80rem;font-weight:600;color:{CYAN};margin-bottom:2px;'>${val:,.0f}</div>
+                <div style='font-size:0.68rem;color:{clr};font-weight:600;'>{pnl_p:+.1f}%</div>
+                <div style='font-size:0.60rem;color:{day_clr};margin-top:1px;'>Day {day_p:+.1f}%</div>
+            </div>"""
+        cards_html += "</div>"
+        st.markdown(cards_html, unsafe_allow_html=True)
+
         # ── Market Sentiment ───────────────────────────────────────────────
         st.markdown("<div class='section-title'>Market Sentiment</div>", unsafe_allow_html=True)
         fg_col, vix_col = st.columns([3, 2])
@@ -1012,27 +1050,83 @@ def main():
 
     # ══ TAB 2 — HOLDINGS ═════════════════════════════════════════════════════
     with tab2:
-        st.markdown("<div class='section-title'>Live Positions — All 18 Stocks</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>Live Positions — All 21 Stocks</div>", unsafe_allow_html=True)
 
-        display = df.rename(columns={
-            "Price":"Price (USD)", "Value_USD":"Value (USD)", "Value_THB":"Value (THB)",
-            "PnL_USD":"P&L ($)", "PnL_pct":"P&L %",
-            "Day_USD":"Day ($)", "Day_pct":"Day %",
-        })[["Ticker","Sector","Shares","Price (USD)","Value (USD)","Value (THB)",
-            "P&L ($)","P&L %","Day ($)","Day %"]]
+        # ── Rich HTML holdings table ──────────────────────────────────────
+        TH = (f"font-family:Orbitron,sans-serif;font-size:0.58rem;color:{CYAN}99;"
+              f"letter-spacing:0.12em;text-transform:uppercase;padding:8px 10px;"
+              f"border-bottom:1px solid {CYAN}33;white-space:nowrap;")
+        TD = "font-size:0.82rem;padding:8px 10px;vertical-align:middle;white-space:nowrap;"
 
-        st.dataframe(
-            display, use_container_width=True, height=560, hide_index=True,
-            column_config={
-                "Price (USD)": st.column_config.NumberColumn(format="$%.2f"),
-                "Value (USD)": st.column_config.NumberColumn(format="$%.2f"),
-                "Value (THB)": st.column_config.NumberColumn(format="฿%.0f"),
-                "P&L ($)":     st.column_config.NumberColumn(format="$%+.2f"),
-                "P&L %":       st.column_config.NumberColumn(format="%+.2f%%"),
-                "Day ($)":     st.column_config.NumberColumn(format="$%+.2f"),
-                "Day %":       st.column_config.NumberColumn(format="%+.2f%%"),
-            },
-        )
+        h_rows = ""
+        for _, row in df.iterrows():
+            t      = row["Ticker"]
+            pnl_p  = row["PnL_pct"]
+            day_p  = row["Day_pct"]
+            pnl_d  = row["PnL_USD"]
+            day_d  = row["Day_USD"]
+            val    = row["Value_USD"]
+            thb    = row["Value_THB"]
+            px     = row["Price"]
+            sh     = row["Shares"]
+            sec    = row["Sector"]
+            bc     = BRAND_COLORS.get(t, CYAN)
+            clr    = GREEN if pnl_p >= 0 else RED
+            d_clr  = GREEN if day_p  >= 0 else RED
+            logo   = f"https://financialmodelingprep.com/image-stock/{t}.png"
+            fallbk = f"https://assets.parqet.com/logos/symbol/{t}?format=png"
+            # Row background alternates subtly
+            row_bg = f"background:linear-gradient(90deg,{bc}06,transparent);"
+            h_rows += f"""
+            <tr style='{row_bg}border-bottom:1px solid {CYAN}0f;transition:background 0.2s;'
+                onmouseover="this.style.background='rgba(0,212,255,0.06)'"
+                onmouseout="this.style.background='linear-gradient(90deg,{bc}06,transparent)'">
+                <td style='{TD}'>
+                    <div style='display:flex;align-items:center;gap:9px;'>
+                        <div style='width:32px;height:32px;border-radius:7px;overflow:hidden;
+                             background:#020c18;border:1px solid {bc}55;flex-shrink:0;
+                             display:flex;align-items:center;justify-content:center;'>
+                            <img src='{logo}' width='26' height='26' style='object-fit:contain;'
+                                 onerror="this.src='{fallbk}';this.onerror=null;" />
+                        </div>
+                        <div>
+                            <div style='font-family:Orbitron,sans-serif;font-size:0.72rem;
+                                 font-weight:700;color:{bc};letter-spacing:0.05em;'>{t}</div>
+                            <div style='font-size:0.62rem;color:#33557799;margin-top:1px;'>{sec}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style='{TD}color:{CYAN};'>${px:,.2f}</td>
+                <td style='{TD}color:#b0d8f0;'>{sh:.4f}</td>
+                <td style='{TD}color:{CYAN};font-weight:600;'>${val:,.2f}</td>
+                <td style='{TD}color:#6699bb;'>฿{thb:,.0f}</td>
+                <td style='{TD}color:{clr};font-weight:600;'>{pnl_p:+.2f}%</td>
+                <td style='{TD}color:{clr};'>${pnl_d:+,.2f}</td>
+                <td style='{TD}color:{d_clr};font-weight:600;'>{day_p:+.2f}%</td>
+                <td style='{TD}color:{d_clr};'>${day_d:+,.2f}</td>
+            </tr>"""
+
+        holdings_table = f"""
+        <div style='overflow-x:auto;border:1px solid {CYAN}22;border-radius:8px;
+             background:linear-gradient(135deg,{CARD} 0%,#020e1a 100%);'>
+        <table style='width:100%;border-collapse:collapse;'>
+            <thead>
+                <tr style='background:linear-gradient(90deg,#031e35,#020c18);'>
+                    <th style='{TH}text-align:left;'>Stock</th>
+                    <th style='{TH}text-align:left;'>Price</th>
+                    <th style='{TH}text-align:left;'>Shares</th>
+                    <th style='{TH}text-align:left;'>Value (USD)</th>
+                    <th style='{TH}text-align:left;'>Value (THB)</th>
+                    <th style='{TH}text-align:left;'>P&amp;L %</th>
+                    <th style='{TH}text-align:left;'>P&amp;L ($)</th>
+                    <th style='{TH}text-align:left;'>Day %</th>
+                    <th style='{TH}text-align:left;'>Day ($)</th>
+                </tr>
+            </thead>
+            <tbody>{h_rows}</tbody>
+        </table>
+        </div>"""
+        st.markdown(holdings_table, unsafe_allow_html=True)
 
         st.markdown("<div class='section-title'>Price Chart</div>", unsafe_allow_html=True)
         s_col, p_col = st.columns([2, 4])
