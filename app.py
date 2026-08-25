@@ -34,7 +34,7 @@ st.set_page_config(
 # ── Portfolio snapshot (May 15, 2026) ─────────────────────────────────────────
 PORTFOLIO = {
     # shares = actual count from DIME brokerage; cost_basis = total invested; snapshot_px = fallback price
-    "META":  {"shares": 1.8243347, "cost_basis":  998.40, "snapshot_px":  545.83, "sector": "Technology"},
+    "META":  {"shares": 3.4721086, "cost_basis": 1913.31, "snapshot_px":  559.02, "sector": "Technology"},
     "AMZN":  {"shares": 3.9972687, "cost_basis":  872.70, "snapshot_px":  260.11, "sector": "Technology"},
     "MSFT":  {"shares": 0.1312695, "cost_basis":   48.30, "snapshot_px":  481.15, "sector": "Technology"},
     "GOOGL": {"shares": 2.0012137, "cost_basis":  335.13, "snapshot_px":  340.67, "sector": "Technology"},
